@@ -1,19 +1,16 @@
-if (tup.getconfig("DEBUG") != "n") then
-	CONFIGS.debug.cflags = "/MDd /Od /ZI"
-	CONFIGS.debug.lflags = ""
-	CONFIGS.debug.coutputs = { "%O.idb" }
-	CONFIGS.debug.loutputs = { "%O.ilk" }
-end
-if (tup.getconfig("RELEASE") != "n") then
-	CONFIGS.release.cflags = "/MT /Ox /Gy /GL /Zi"
-	CONFIGS.release.lflags = " /OPT:REF /OPT:ICF /LTCG"
-	CONFIGS.release.coutputs = { }
-	CONFIGS.release.loutputs = { }
-end
+CONFIGS.debug.cflags = "/MDd /Od /ZI"
+CONFIGS.debug.lflags = ""
+CONFIGS.debug.coutputs = { "%O.idb" }
+CONFIGS.debug.loutputs = { "%O.ilk" }
 
-function cxx(inputs, extra_flags, objdir)
+CONFIGS.release.cflags = "/MT /Ox /Gy /GL /Zi"
+CONFIGS.release.lflags = " /OPT:REF /OPT:ICF /LTCG"
+CONFIGS.release.coutputs = { }
+CONFIGS.release.loutputs = { }
+
+function cxx(configs, inputs, extra_flags, objdir)
 	ret = {}
-	for config_name, vars in pairs(CONFIGS) do
+	for config_name, vars in pairs(configs) do
 		outputs = { (BASE.objdir .. vars.objdir .. objdir .. "/%B.obj") }
 		outputs["extra_outputs"] = { "%O.pdb" }
 		outputs["extra_outputs"] += vars.coutputs
@@ -41,9 +38,9 @@ function cxx(inputs, extra_flags, objdir)
 	return ret
 end
 
-function exe(inputs, extra_flags, exe_basename)
+function exe(configs, inputs, extra_flags, exe_basename)
 	ret = {}
-	for config_name, vars in pairs(CONFIGS) do
+	for config_name, vars in pairs(configs) do
 		basename = (exe_basename .. vars.suffix)
 		outputs = { (BASE.bindir .. "/" .. basename .. ".exe") }
 		outputs["extra_outputs"] = { "%O.pdb" }

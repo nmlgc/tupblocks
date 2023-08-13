@@ -1,16 +1,20 @@
-CONFIGS = {}
-
-if (tup.getconfig("DEBUG") != "n") then
-	CONFIGS.debug = {
+CONFIGS = {
+	debug = {
 		objdir = "Debug/",
 		suffix = "d",
-	}
-end
-if (tup.getconfig("RELEASE") != "n") then
-	CONFIGS.release = {
+	},
+	release = {
 		objdir = "Release/",
 		suffix = "",
 	}
+}
+
+SELECTED = {}
+if (tup.getconfig("DEBUG") != "n") then
+	SELECTED.debug = CONFIGS.debug
+end
+if (tup.getconfig("RELEASE") != "n") then
+	SELECTED.release = CONFIGS.release
 end
 
 tup.include(string.format("Tuprules.%s.lua", tup.getconfig("TUP_PLATFORM")))
