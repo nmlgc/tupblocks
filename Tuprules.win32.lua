@@ -10,7 +10,7 @@ CONFIGS.release.loutputs = { }
 
 function cxx(configs, inputs, extra_flags, objdir)
 	ret = {}
-	for config_name, vars in pairs(configs) do
+	for buildtype, vars in pairs(configs) do
 		outputs = { (BASE.objdir .. vars.objdir .. objdir .. "/%B.obj") }
 		outputs["extra_outputs"] = { "%O.pdb" }
 		outputs["extra_outputs"] += vars.coutputs
@@ -30,9 +30,9 @@ function cxx(configs, inputs, extra_flags, objdir)
 				" %f"
 			), outputs
 		)
-		ret[config_name] += objs
+		ret[buildtype] += objs
 		for _, fn in pairs(objs) do
-			ret[config_name]["extra_inputs"] += string.gsub(fn, ".obj$", ".pdb")
+			ret[buildtype]["extra_inputs"] += string.gsub(fn, ".obj$", ".pdb")
 		end
 	end
 	return ret
@@ -40,13 +40,13 @@ end
 
 function exe(configs, inputs, extra_flags, exe_basename)
 	ret = {}
-	for config_name, vars in pairs(configs) do
+	for buildtype, vars in pairs(configs) do
 		basename = (exe_basename .. vars.suffix)
 		outputs = { (BASE.bindir .. "/" .. basename .. ".exe") }
 		outputs["extra_outputs"] = { "%O.pdb" }
 		outputs["extra_outputs"] += vars.loutputs
-		ret[config_name] += tup.rule(
-			inputs[config_name], (
+		ret[buildtype] += tup.rule(
+			inputs[buildtype], (
 				"link /nologo /DEBUG:FULL " ..
 				BASE.lflags .. " " ..
 				vars.lflags .. " " ..
