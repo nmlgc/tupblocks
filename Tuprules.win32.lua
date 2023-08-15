@@ -1,17 +1,17 @@
-CONFIGS.debug.cflags = "/MDd /Od /ZI"
-CONFIGS.debug.lflags = ""
-CONFIGS.debug.coutputs = { "%O.idb" }
-CONFIGS.debug.loutputs = { "%O.ilk" }
+CONFIG.buildtypes.debug.cflags = "/MDd /Od /ZI"
+CONFIG.buildtypes.debug.lflags = ""
+CONFIG.buildtypes.debug.coutputs = { "%O.idb" }
+CONFIG.buildtypes.debug.loutputs = { "%O.ilk" }
 
-CONFIGS.release.cflags = "/MT /Ox /Gy /GL /Zi"
-CONFIGS.release.lflags = " /OPT:REF /OPT:ICF /LTCG"
-CONFIGS.release.coutputs = { }
-CONFIGS.release.loutputs = { }
+CONFIG.buildtypes.release.cflags = "/MT /Ox /Gy /GL /Zi"
+CONFIG.buildtypes.release.lflags = " /OPT:REF /OPT:ICF /LTCG"
+CONFIG.buildtypes.release.coutputs = { }
+CONFIG.buildtypes.release.loutputs = { }
 
-function cxx(configs, inputs, extra_flags, objdir)
+function cxx(configs, inputs)
 	ret = {}
-	for buildtype, vars in pairs(configs) do
-		outputs = { (BASE.objdir .. vars.objdir .. objdir .. "/%B.obj") }
+	for buildtype, vars in pairs(configs.buildtypes) do
+		outputs = { (BASE.objdir .. vars.objdir .. "%B.obj") }
 		outputs["extra_outputs"] = { "%O.pdb" }
 		outputs["extra_outputs"] += vars.coutputs
 		objs = tup.foreach_rule(
@@ -24,10 +24,7 @@ function cxx(configs, inputs, extra_flags, objdir)
 				-- successful build.
 				"/Fd:%O.pdb " ..
 
-				BASE.cflags .. " " ..
-				vars.cflags .. " " ..
-				extra_flags ..
-				" %f"
+				BASE.cflags .. " " .. vars.cflags .. " %f"
 			), outputs
 		)
 		ret[buildtype] += objs
@@ -38,9 +35,9 @@ function cxx(configs, inputs, extra_flags, objdir)
 	return ret
 end
 
-function exe(configs, inputs, extra_flags, exe_basename)
+function exe(configs, inputs, exe_basename)
 	ret = {}
-	for buildtype, vars in pairs(configs) do
+	for buildtype, vars in pairs(configs.buildtypes) do
 		basename = (exe_basename .. vars.suffix)
 		outputs = { (BASE.bindir .. "/" .. basename .. ".exe") }
 		outputs["extra_outputs"] = { "%O.pdb" }
@@ -50,7 +47,6 @@ function exe(configs, inputs, extra_flags, exe_basename)
 				"link /nologo /DEBUG:FULL " ..
 				BASE.lflags .. " " ..
 				vars.lflags .. " " ..
-				extra_flags .. " " ..
 				"/PDBALTPATH:" .. basename .. ".pdb /out:%o %f"
 			),
 			outputs
