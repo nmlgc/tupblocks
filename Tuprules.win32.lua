@@ -4,7 +4,7 @@ CONFIG.buildtypes.debug.coutputs = { "%O.idb" }
 CONFIG.buildtypes.debug.loutputs = { "%O.ilk" }
 
 CONFIG.buildtypes.release.cflags = "/MT /Ox /Gy /GL /Zi"
-CONFIG.buildtypes.release.lflags = " /OPT:REF /OPT:ICF /LTCG"
+CONFIG.buildtypes.release.lflags = "/OPT:REF /OPT:ICF /LTCG"
 CONFIG.buildtypes.release.coutputs = { }
 CONFIG.buildtypes.release.loutputs = { }
 

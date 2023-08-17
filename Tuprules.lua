@@ -13,7 +13,19 @@ CONFIG = {
 
 function merge(v, tbl, index)
 	if type((tbl or {})[index]) == "string" then
-		return (v .. tbl[index])
+		local merged = tbl[index]
+		if merged:sub(0, 1) == " " then
+			error("Merged variables should not start with spaces:" .. merged, 3)
+		elseif merged:sub(-1) == " " then
+			error("Merged variables should not end with spaces: " .. merged, 3)
+		end
+
+		-- By only space-separating flags, we allow custom directories.
+		if index:sub(-5) == "flags" and v != "" and merged != "" then
+			return (v .. " " .. merged)
+		else
+			return (v .. merged)
+		end
 	end
 	return v
 end
