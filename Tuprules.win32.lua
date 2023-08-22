@@ -11,7 +11,7 @@ CONFIG.buildtypes.release.loutputs = { }
 function cxx(configs, inputs)
 	ret = {}
 	for buildtype, vars in pairs(configs.buildtypes) do
-		outputs = { (BASE.objdir .. vars.objdir .. "%B.obj") }
+		outputs = { (configs.base.objdir .. vars.objdir .. "%B.obj") }
 		outputs["extra_outputs"] = { "%O.pdb" }
 		outputs["extra_outputs"] += vars.coutputs
 		objs = tup.foreach_rule(
@@ -24,7 +24,7 @@ function cxx(configs, inputs)
 				-- successful build.
 				"/Fd:%O.pdb " ..
 
-				BASE.cflags .. " " .. vars.cflags .. " %f"
+				configs.base.cflags .. " " .. vars.cflags .. " %f"
 			), outputs
 		)
 		ret[buildtype] += objs
@@ -39,13 +39,13 @@ function exe(configs, inputs, exe_basename)
 	ret = {}
 	for buildtype, vars in pairs(configs.buildtypes) do
 		basename = (exe_basename .. vars.suffix)
-		outputs = { (BASE.bindir .. "/" .. basename .. ".exe") }
+		outputs = { (configs.base.bindir .. "/" .. basename .. ".exe") }
 		outputs["extra_outputs"] = { "%O.pdb" }
 		outputs["extra_outputs"] += vars.loutputs
 		ret[buildtype] += tup.rule(
 			inputs[buildtype], (
 				"link /nologo /DEBUG:FULL " ..
-				BASE.lflags .. " " ..
+				configs.base.lflags .. " " ..
 				vars.lflags .. " " ..
 				"/PDBALTPATH:" .. basename .. ".pdb /out:%o %f"
 			),

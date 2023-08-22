@@ -1,4 +1,10 @@
 CONFIG = {
+	base = {
+		cflags = "",
+		lflags = "",
+		objdir = "obj/",
+		bindir = "bin/",
+	},
 	buildtypes = {
 		debug = {
 			objdir = "Debug/",
@@ -33,9 +39,16 @@ end
 function CONFIG:branch(buildtype_filter, ...)
 	local arg = { ... }
 	local ret = {
+		base = {},
 		buildtypes = {},
 		branch = CONFIG.branch,
 	}
+	for k, v in pairs(self.base) do
+		for _, other in pairs(arg) do
+			v = merge(v, other.base, k)
+		end
+		ret.base[k] = v
+	end
 	for buildtype, vars in pairs(self.buildtypes) do
 		if (buildtype_filter == "") or (buildtype == buildtype_filter) then
 			ret.buildtypes[buildtype] = {}
