@@ -11,7 +11,7 @@ CONFIG.buildtypes.release.loutputs = { }
 function cxx(configs, inputs)
 	ret = {}
 	for buildtype, vars in pairs(configs.buildtypes) do
-		outputs = { (configs.base.objdir .. vars.objdir .. "%B.obj") }
+		outputs = { (configs.base.objdir .. "%B" .. vars.suffix .. ".obj") }
 		outputs["extra_outputs"] = { "%O.pdb" }
 		outputs["extra_outputs"] += vars.coutputs
 		objs = tup.foreach_rule(

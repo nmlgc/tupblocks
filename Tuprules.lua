@@ -7,11 +7,9 @@ CONFIG = {
 	},
 	buildtypes = {
 		debug = {
-			objdir = "Debug/",
 			suffix = "d",
 		},
 		release = {
-			objdir = "Release/",
 			suffix = "",
 		},
 	},
