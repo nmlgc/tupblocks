@@ -61,7 +61,30 @@ function CONFIG:branch(buildtype_filter, ...)
 	return ret
 end
 
--- https://stackoverflow.com/questions/49709999/
+-- Inspired by https://stackoverflow.com/a/1283608.
+function table_merge(t1, t2)
+	-- The caller expects [t1] to remain unmodified, so we create a shallow copy
+	local ret = {}
+	for k, v in pairs(t1) do
+		ret[k] = v
+	end
+	setmetatable(ret, getmetatable(t1))
+
+	for k, v in pairs(t2) do
+		if type(v) == "table" then
+			if type(ret[k] or false) == "table" then
+				ret[k] = table_merge(ret[k] or {}, t2[k] or {})
+			elseif type(v) != 'function' then
+				ret[k] = v
+			end
+		elseif type(v) != 'function' then
+			ret += v
+		end
+	end
+	return ret
+end
+
+-- https://stackoverflow.com/a/49709999
 function table_filter(tbl, patterns)
 	for _, pattern in pairs(patterns) do
 		local new_index = 1
@@ -78,6 +101,7 @@ function table_filter(tbl, patterns)
 end
 
 functional_metatable = {
+	__add = table_merge,
 	__sub = table_filter,
 }
 
