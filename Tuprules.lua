@@ -105,4 +105,21 @@ functional_metatable = {
 	__sub = table_filter,
 }
 
+function sourcepath(path)
+	if path:sub(-1) != "/" then
+		error("Paths should end with a slash: " .. path, 2)
+	end
+	return {
+		root = path,
+		join = function(component)
+			return (path .. component)
+		end,
+		glob = function(pattern)
+			local ret = tup.glob(path .. pattern)
+			setmetatable(ret, functional_metatable)
+			return ret
+		end
+	}
+end
+
 tup.include(string.format("Tuprules.%s.lua", tup.getconfig("TUP_PLATFORM")))
