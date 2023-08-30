@@ -36,6 +36,41 @@ function cxx(configs, inputs)
 	return ret
 end
 
+function rc(configs, inputs)
+	local ret = {}
+	outputs = { (configs.base.objdir .. "%B.res") }
+	objs = tup.foreach_rule(inputs, "rc /nologo /n /fo %o %f", outputs)
+	for buildtype, vars in pairs(configs.buildtypes) do
+		ret[buildtype] += objs
+	end
+	setmetatable(ret, functional_metatable)
+	return ret
+end
+
+function dll(configs, inputs, name)
+	local ret = {}
+	for buildtype, vars in pairs(configs.buildtypes) do
+		local basename = (name .. vars.suffix)
+		local lib = (configs.base.objdir .. basename .. ".lib")
+		local dll = (configs.base.bindir .. basename .. ".dll")
+		local outputs = { dll }
+		outputs["extra_outputs"] = { "%O.pdb", lib }
+		outputs["extra_outputs"] += vars.loutputs
+		tup.rule(
+			inputs[buildtype], (
+				"link /nologo /DEBUG:FULL /DLL /NOEXP /IMPLIB:" .. lib .. " " ..
+				configs.base.lflags .. " " ..
+				vars.lflags .. " " ..
+				"/PDBALTPATH:" .. basename .. ".pdb /out:%o %f"
+			),
+			outputs
+		)
+		ret[buildtype] += lib
+	end
+	setmetatable(ret, functional_metatable)
+	return ret
+end
+
 function exe(configs, inputs, exe_basename)
 	ret = {}
 	for buildtype, vars in pairs(configs.buildtypes) do
