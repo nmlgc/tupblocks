@@ -43,6 +43,11 @@ function CONFIG:branch(buildtype_filter, ...)
 	}
 	for k, v in pairs(self.base) do
 		for _, other in pairs(arg) do
+			if other.branch then
+				error(
+					"Configurations should not be combined with each other", 2
+				)
+			end
 			v = merge(v, other.base, k)
 		end
 		ret.base[k] = v
