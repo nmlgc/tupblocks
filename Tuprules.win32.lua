@@ -13,6 +13,7 @@ function cxx(configs, inputs)
 	for buildtype, vars in pairs(configs.buildtypes) do
 		outputs = { (configs.base.objdir .. "%B" .. vars.suffix .. ".obj") }
 		outputs["extra_outputs"] = { "%O.pdb" }
+		outputs["extra_outputs"] += configs.base.coutputs
 		outputs["extra_outputs"] += vars.coutputs
 		objs = tup.foreach_rule(
 			inputs, (
@@ -55,6 +56,7 @@ function dll(configs, inputs, name)
 		local dll = (configs.base.bindir .. basename .. ".dll")
 		local outputs = { dll }
 		outputs["extra_outputs"] = { "%O.pdb", lib }
+		outputs["extra_outputs"] += configs.base.loutputs
 		outputs["extra_outputs"] += vars.loutputs
 		tup.rule(
 			inputs[buildtype], (
@@ -77,6 +79,7 @@ function exe(configs, inputs, exe_basename)
 		basename = (exe_basename .. vars.suffix)
 		outputs = { (configs.base.bindir .. "/" .. basename .. ".exe") }
 		outputs["extra_outputs"] = { "%O.pdb" }
+		outputs["extra_outputs"] += configs.base.loutputs
 		outputs["extra_outputs"] += vars.loutputs
 		ret[buildtype] += tup.rule(
 			inputs[buildtype], (

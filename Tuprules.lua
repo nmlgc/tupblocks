@@ -4,6 +4,8 @@ CONFIG = {
 		lflags = "",
 		objdir = "obj/",
 		bindir = "bin/",
+		coutputs = {},
+		loutputs = {},
 	},
 	buildtypes = {
 		debug = {
@@ -29,6 +31,10 @@ function merge(v, tbl, index)
 			return (v .. " " .. merged)
 		else
 			return (v .. merged)
+		end
+	elseif type((tbl or {})[index]) == "table" then
+		for key, value in pairs(tbl[index]) do
+			table.insert(v, key, value)
 		end
 	end
 	return v
