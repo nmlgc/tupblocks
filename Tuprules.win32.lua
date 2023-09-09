@@ -63,7 +63,7 @@ function dll(configs, inputs, name)
 				"link /nologo /DEBUG:FULL /DLL /NOEXP /IMPLIB:" .. lib .. " " ..
 				configs.base.lflags .. " " ..
 				vars.lflags .. " " ..
-				"/PDBALTPATH:" .. basename .. ".pdb /out:%o %f"
+				"/MANIFEST:EMBED /PDBALTPATH:" .. basename .. ".pdb /out:%o %f"
 			),
 			outputs
 		)
@@ -86,7 +86,7 @@ function exe(configs, inputs, exe_basename)
 				"link /nologo /DEBUG:FULL " ..
 				configs.base.lflags .. " " ..
 				vars.lflags .. " " ..
-				"/PDBALTPATH:" .. basename .. ".pdb /out:%o %f"
+				"/MANIFEST:EMBED /PDBALTPATH:" .. basename .. ".pdb /out:%o %f"
 			),
 			outputs
 		)
