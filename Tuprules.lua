@@ -61,4 +61,24 @@ function CONFIG:branch(buildtype_filter, ...)
 	return ret
 end
 
+-- https://stackoverflow.com/questions/49709999/
+function table_filter(tbl, patterns)
+	for _, pattern in pairs(patterns) do
+		local new_index = 1
+		local size_orig = #tbl
+		for old_index, v in ipairs(tbl) do
+			if not string.match(v, pattern) then
+				tbl[new_index] = v
+				new_index = new_index + 1
+			end
+		end
+		for i = new_index, size_orig do tbl[i] = nil end
+	end
+	return tbl
+end
+
+functional_metatable = {
+	__sub = table_filter,
+}
+
 tup.include(string.format("Tuprules.%s.lua", tup.getconfig("TUP_PLATFORM")))

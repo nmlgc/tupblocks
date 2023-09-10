@@ -9,7 +9,7 @@ CONFIG.buildtypes.release.coutputs = { }
 CONFIG.buildtypes.release.loutputs = { }
 
 function cxx(configs, inputs)
-	ret = {}
+	local ret = {}
 	for buildtype, vars in pairs(configs.buildtypes) do
 		outputs = { (configs.base.objdir .. "%B" .. vars.suffix .. ".obj") }
 		outputs["extra_outputs"] = { "%O.pdb" }
@@ -32,6 +32,7 @@ function cxx(configs, inputs)
 			ret[buildtype]["extra_inputs"] += string.gsub(fn, ".obj$", ".pdb")
 		end
 	end
+	setmetatable(ret, functional_metatable)
 	return ret
 end
 
