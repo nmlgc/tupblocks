@@ -3,7 +3,7 @@ CONFIG.buildtypes.debug.lflags = ""
 CONFIG.buildtypes.debug.coutputs = { "%O.idb" }
 CONFIG.buildtypes.debug.loutputs = { "%O.ilk" }
 
-CONFIG.buildtypes.release.cflags = "/MT /O2 /GL /Zi"
+CONFIG.buildtypes.release.cflags = "/MT /O2 /GL /Zi /DNDEBUG"
 CONFIG.buildtypes.release.lflags = "/OPT:REF /OPT:ICF /LTCG"
 CONFIG.buildtypes.release.coutputs = { }
 CONFIG.buildtypes.release.loutputs = { }

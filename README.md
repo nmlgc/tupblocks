@@ -79,7 +79,6 @@ THE_LIB_COMPILE = {
 	},
 	buildtypes = {
 		debug = { cflags = "/DDEBUG" },
-		release = { cflags = "/DNDEBUG" },
 	}
 }
 
