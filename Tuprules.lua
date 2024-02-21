@@ -18,7 +18,8 @@ CONFIG = {
 }
 
 function merge(v, tbl, index)
-	if type((tbl or {})[index]) == "string" then
+	merge_type = type((tbl or {})[index])
+	if merge_type == "string" then
 		local merged = tbl[index]
 		if merged:sub(0, 1) == " " then
 			error("Merged variables should not start with spaces:" .. merged, 3)
@@ -32,10 +33,12 @@ function merge(v, tbl, index)
 		else
 			return (v .. merged)
 		end
-	elseif type((tbl or {})[index]) == "table" then
+	elseif merge_type == "table" then
 		for key, value in pairs(tbl[index]) do
 			table.insert(v, key, value)
 		end
+	elseif merge_type == "function" then
+		return tbl[index](v)
 	end
 	return v
 end
