@@ -17,6 +17,16 @@ CONFIG = {
 	},
 }
 
+function flag_remove(flag)
+	return function(s)
+		s = s:gsub((" " .. flag .. " "), " ")
+		s = s:gsub(("^" .. flag .. " "), " ")
+		s = s:gsub((" " .. flag .. "$"), " ")
+		s = s:gsub(("^" .. flag .. "$"), "")
+		return s
+	end
+end
+
 function merge(v, tbl, index)
 	merge_type = type((tbl or {})[index])
 	if merge_type == "string" then

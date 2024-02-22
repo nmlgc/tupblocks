@@ -79,6 +79,15 @@ THE_LIB_COMPILE = {
 	},
 	buildtypes = {
 		debug = { cflags = "/DDEBUG" },
+
+		-- The base CONFIG table uses the /GL flag for Visual Studio release
+		-- builds by default, but this library doesn't like it. Merged settings
+		-- can also be functions that are applied to the current value, which
+		-- we can use to remove the flag using the flag_remove() helper.
+		-- Based on a true story:
+		--
+		-- https://github.com/libsdl-org/SDL/commit/ae7446a9591299eef719f82403c
+		release = { cflags = flag_remove("/GL") }
 	}
 }
 
