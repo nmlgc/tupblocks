@@ -25,7 +25,7 @@ function cxx(configs, inputs)
 				-- successful build.
 				"/Fd:%O.pdb " ..
 
-				configs.base.cflags .. " " .. vars.cflags .. " %f"
+				configs.base.cflags .. " " .. vars.cflags .. " \"%f\""
 			), outputs
 		)
 		ret[buildtype] += objs
