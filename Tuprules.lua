@@ -50,7 +50,9 @@ function flag_remove(flag)
 	end
 end
 
+---@return any merged Clone of `v` with `tbl[index]` merged into it.
 function merge(v, tbl, index)
+	local v_type = type(v)
 	merge_type = type((tbl or {})[index])
 	if merge_type == "string" then
 		local merged = tbl[index]
@@ -67,13 +69,17 @@ function merge(v, tbl, index)
 			return (v .. merged)
 		end
 	elseif merge_type == "table" then
+		local ret = { table.unpack(v) } -- Create a shallow copy
 		for key, value in pairs(tbl[index]) do
-			table.insert(v, key, value)
+			table.insert(ret, key, value)
 		end
+		return ret
 	elseif merge_type == "function" then
 		return tbl[index](v)
 	end
-	return v
+	error(string.format(
+		"No merging rule defined for %s←%s", v_type, merge_type
+	))
 end
 
 ---@param ... ConfigShape
