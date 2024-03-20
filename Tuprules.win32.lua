@@ -1,6 +1,8 @@
 ---@class ConfigShape
 ---@field cflags? ConfigVarBuildtyped<string>
 ---@field lflags? ConfigVarBuildtyped<string>
+---@field cinputs? ConfigVarBuildtyped<string>
+---@field linputs? ConfigVarBuildtyped<string>
 ---@field coutputs? ConfigVarBuildtyped<string>
 ---@field loutputs? ConfigVarBuildtyped<string>
 
@@ -12,6 +14,8 @@ CONFIG = CONFIG:branch({
 	lflags = {
 		release = { "/OPT:REF", "/OPT:ICF", "/LTCG" },
 	},
+	cinputs = {},
+	linputs = {},
 	coutputs = { debug = { "%O.idb" } },
 	loutputs = { debug = { "%O.ilk" } },
 })
@@ -20,13 +24,14 @@ CONFIG = CONFIG:branch({
 function cxx(configs, inputs)
 	local ret = {}
 	local buildtypes = configs:render_for_buildtypes(
-		"cflags", "coutputs", "suffix"
+		"cflags", "cinputs", "coutputs", "suffix"
 	)
 	for buildtype, vars in pairs(buildtypes) do
+		vars.cinputs += inputs
 		vars.coutputs += (configs.vars.objdir .. "%B" .. vars.suffix .. ".obj")
 		vars.coutputs.extra_outputs += { "%O.pdb" }
 		objs = tup.foreach_rule(
-			inputs, (
+			vars.cinputs, (
 				"cl /nologo /c /Qpar /Fo:%o " ..
 
 				-- /Fd is a rather clunky way of overriding vc140.pdb, but we'd
@@ -63,7 +68,7 @@ end
 function dll(configs, inputs, name)
 	local ret = {}
 	local buildtypes = configs:render_for_buildtypes(
-		"lflags", "loutputs", "suffix"
+		"lflags", "linputs", "loutputs", "suffix"
 	)
 	for buildtype, vars in pairs(buildtypes) do
 		local basename = (name .. vars.suffix)
@@ -72,7 +77,7 @@ function dll(configs, inputs, name)
 		vars.loutputs += dll
 		vars.loutputs.extra_outputs += { "%O.pdb", lib }
 		tup.rule(
-			inputs[buildtype], (
+			TableExtend(vars.linputs, inputs[buildtype]), (
 				"link /nologo /DEBUG:FULL /DLL /NOEXP /IMPLIB:" .. lib ..
 				ConcatFlags(vars.lflags) .. " " ..
 				"/MANIFEST:EMBED /PDBALTPATH:" .. basename .. ".pdb /out:%o %f"
@@ -89,14 +94,14 @@ end
 function exe(configs, inputs, exe_basename)
 	ret = {}
 	local buildtypes = configs:render_for_buildtypes(
-		"lflags", "loutputs", "suffix"
+		"lflags", "linputs", "loutputs", "suffix"
 	)
 	for buildtype, vars in pairs(buildtypes) do
 		basename = (exe_basename .. vars.suffix)
 		vars.loutputs += (configs.vars.bindir .. "/" .. basename .. ".exe")
 		vars.loutputs.extra_outputs += { "%O.pdb" }
 		ret[buildtype] += tup.rule(
-			inputs[buildtype], (
+			TableExtend(vars.linputs, inputs[buildtype]), (
 				"link /nologo /DEBUG:FULL" ..
 				ConcatFlags(vars.lflags) .. " " ..
 				"/MANIFEST:EMBED /PDBALTPATH:" .. basename .. ".pdb /out:%o %f"
