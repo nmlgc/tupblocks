@@ -38,7 +38,7 @@ function merge(v, tbl, index)
 		end
 
 		-- By only space-separating flags, we allow custom directories.
-		if index:sub(-5) == "flags" and v != "" and merged != "" then
+		if ((index:sub(-5) == "flags") and (v ~= "") and (merged ~= "")) then
 			return (v .. " " .. merged)
 		else
 			return (v .. merged)
@@ -98,10 +98,10 @@ function table_merge(t1, t2)
 		if type(v) == "table" then
 			if type(ret[k] or false) == "table" then
 				ret[k] = table_merge(ret[k] or {}, t2[k] or {})
-			elseif type(v) != 'function' then
+			elseif (type(v) ~= 'function') then
 				ret[k] = v
 			end
-		elseif type(v) != 'function' then
+		elseif (type(v) ~= 'function') then
 			ret += v
 		end
 	end
@@ -130,7 +130,7 @@ functional_metatable = {
 }
 
 function sourcepath(path)
-	if path:sub(-1) != "/" then
+	if (path:sub(-1) ~= "/") then
 		error("Paths should end with a slash: " .. path, 2)
 	end
 	return {
