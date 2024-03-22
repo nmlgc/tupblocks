@@ -8,6 +8,7 @@ CONFIG.buildtypes.release.lflags = "/OPT:REF /OPT:ICF /LTCG"
 CONFIG.buildtypes.release.coutputs = { }
 CONFIG.buildtypes.release.loutputs = { }
 
+---@param configs Config
 function cxx(configs, inputs)
 	local ret = {}
 	for buildtype, vars in pairs(configs.buildtypes) do
@@ -37,6 +38,7 @@ function cxx(configs, inputs)
 	return ret
 end
 
+---@param configs Config
 function rc(configs, inputs)
 	local ret = {}
 	outputs = { (configs.base.objdir .. "%B.res") }
@@ -48,6 +50,7 @@ function rc(configs, inputs)
 	return ret
 end
 
+---@param configs Config
 function dll(configs, inputs, name)
 	local ret = {}
 	for buildtype, vars in pairs(configs.buildtypes) do
@@ -73,6 +76,7 @@ function dll(configs, inputs, name)
 	return ret
 end
 
+---@param configs Config
 function exe(configs, inputs, exe_basename)
 	ret = {}
 	for buildtype, vars in pairs(configs.buildtypes) do

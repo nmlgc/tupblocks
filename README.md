@@ -62,8 +62,8 @@ tup.include("vendor/tupblocks/Tuprules.lua")
 THE_LIB = sourcepath("vendor/a_thirdparty_library/")
 
 -- Define the flags exclusive to this library, as separate tables. All of these
--- configuration and flag tables use the shape of the `CONFIG` table declared
--- in `Tuprules.lua` which represents the root of the tree:
+-- configuration and flag tables follow the `ConfigShape` class declared in
+-- `Tuprules.lua`:
 --
 -- {
 -- 	base = { (compiler settings…) },

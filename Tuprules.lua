@@ -1,3 +1,24 @@
+---@alias ConfigStringFunction fun(s: string): string
+---@alias ConfigString string | ConfigStringFunction
+
+---@class ConfigBase
+---@field cflags? ConfigString
+---@field lflags? ConfigString
+---@field objdir? ConfigString
+---@field bindir? ConfigString
+---@field coutputs? string[]
+---@field loutputs? string[]
+
+---@class ConfigBuildtype : ConfigBase
+---@field suffix? ConfigString
+
+---@alias ConfigBuildtypes { [string]: ConfigBuildtype }
+
+---@class ConfigShape
+---@field base? ConfigBase
+---@field buildtypes? ConfigBuildtypes
+
+---@class Config
 CONFIG = {
 	base = {
 		cflags = "",
@@ -17,6 +38,8 @@ CONFIG = {
 	},
 }
 
+---@param flag string
+---@return ConfigStringFunction
 function flag_remove(flag)
 	return function(s)
 		s = s:gsub((" " .. flag .. " "), " ")
@@ -53,15 +76,22 @@ function merge(v, tbl, index)
 	return v
 end
 
+---@param buildtype_filter string
+---@param ... ConfigShape
+---@return Config
 function CONFIG:branch(buildtype_filter, ...)
 	local arg = { ... }
+
+	---@type Config
 	local ret = {
 		base = {},
 		buildtypes = {},
 		branch = CONFIG.branch,
 	}
+
 	for k, v in pairs(self.base) do
 		for _, other in pairs(arg) do
+			---@cast other +Config
 			if other.branch then
 				error(
 					"Configurations should not be combined with each other", 2
