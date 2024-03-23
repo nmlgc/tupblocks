@@ -52,6 +52,47 @@ function cxx(configs, inputs)
 	return ret
 end
 
+---Compiles the given C++ modules and returns a shape for using them.
+---@param configs Config
+---@return ConfigShape
+function cxxm(configs, inputs)
+	if (type(inputs) ~= "table") then
+		inputs = { inputs }
+	end
+	local module_cflags = { "/EHsc", "/std:c++latest" }
+
+	---@type ConfigShape
+	local module_compile = {
+		cflags = { "/ifcOutput %O.ifc" },
+		coutputs = { "%O.ifc" },
+	}
+	module_compile.cflags += module_cflags
+
+	local module_obj = cxx(configs:branch(module_compile), inputs)
+
+	---@type ConfigShape
+	local ret = {
+		cflags = module_cflags,
+		cinputs = {},
+		lflags = {},
+		linputs = {},
+	}
+	for buildtype, objs in pairs(module_obj) do
+		for i, obj in ipairs(objs) do
+			local module = tup.base(inputs[i])
+			local ifc = obj:gsub(".obj$", ".ifc")
+			ret.cflags[buildtype] += string.format(
+				"/reference %s=%s", module, ifc:gsub("/", "\\")
+			)
+			ret.cinputs[buildtype] += ifc
+			ret.lflags[buildtype] += obj
+		end
+		ret.linputs[buildtype] += objs
+		ret.linputs[buildtype] += objs.extra_inputs
+	end
+	return ret
+end
+
 ---@param configs Config
 function rc(configs, inputs)
 	local ret = {}
