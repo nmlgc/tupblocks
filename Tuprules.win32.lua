@@ -93,6 +93,20 @@ function cxxm(configs, inputs)
 	return ret
 end
 
+-- Compiles the C++ standard library modules and returns a shape for using them.
+---@param configs Config
+---@return ConfigShape
+function cxx_std_modules(configs)
+	tup.import("VCToolsInstallDir")
+
+	-- tup turns `VCToolsInstallDir` into a table if it contains a space, but
+	-- concatenating a string turns it back into a string?!
+	local dir = (VCToolsInstallDir .. "\\modules"):gsub("\\", "/")
+	local std = cxxm(configs, (dir .. "/std.ixx"))
+	local compat = cxxm(configs:branch(std), (dir .. "/std.compat.ixx"))
+	return TableExtend(std, compat)
+end
+
 ---@param configs Config
 function rc(configs, inputs)
 	local ret = {}

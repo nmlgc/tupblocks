@@ -4,6 +4,7 @@
 
 The missing layer between [Tup](https://gittup.org/tup) and your C/C++ compiler binaries, providing opinionated flags for typical debug/release mode settings.
 My fourth attempt at writing such a layer, and finally almost not janky.
+Provides first-class support for [C++23 Standard Library Modules (P2465R3)](https://wg21.link/P2465R3).
 
 Currently only supporting Visual Studio compilers on Windows.
 *nix support will be added during [the porting process of 秋霜玉 / Shuusou Gyoku](https://github.com/nmlgc/ssg/issues/42).
@@ -113,10 +114,15 @@ the_lib_dll = dll(the_lib_cfg, the_lib_obj, "the_lib")
 -- Define the project itself.
 PROJECT = sourcepath("src_of_project/")
 
+-- The project uses C++23 Standard Library Modules (`import std;`). Compile the
+-- `std` module with the basic settings and store the compilation flags
+-- necessary to use it. This automatically enables support for the latest C++
+-- language standard version.
+local modules_cfg = cxx_std_modules(CONFIG)
+
 -- Since we don't need our flags anywhere else, we just inline the table.
-project_cfg = CONFIG:branch(THE_LIB_LINK, {
+project_cfg = CONFIG:branch(modules_cfg, THE_LIB_LINK, {
 	cflags = {
-		"/std:c++latest",
 		("/I" .. PROJECT.root),
 		"/source-charset:utf-8",
 		"/execution-charset:utf-8",
