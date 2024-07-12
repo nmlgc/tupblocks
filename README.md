@@ -40,7 +40,7 @@ This example assumes the following directory structure:
       * 🗒️ `*.h`
     * 📂 `src`
       * 🗒️ `*.c`
-      * 🗒️ `linux_exclusive.cpp`
+      * 🗒️ `linux_exclusive.c`
   * 📁 **`tupblocks`** (Checkout of this repo, e.g. as a Git submodule or [subrepo](https://github.com/ingydotnet/git-subrepo))
 * `Tupfile.ini`
 * `Tupfile.lua`
@@ -109,7 +109,7 @@ the_lib_cfg = CONFIG:branch("", THE_LIB_COMPILE, THE_LIB_LINK)
 -- Since we're running under Tup's Lua parser, we can always use the `+=`
 -- operator for convenient table merging, even if the variable has not been
 -- declared yet.
-the_lib_src += (THE_LIB.glob("src/*.c") - { "linux_exclusive.cpp$" })
+the_lib_src += (THE_LIB.glob("src/*.c") - { "linux_exclusive.c$" })
 
 -- Compile and link the library into a DLL. The rule functions return a table
 -- that represents the outputs of this build step as inputs for further steps.
