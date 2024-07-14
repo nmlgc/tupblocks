@@ -1,16 +1,17 @@
----@alias ConfigStringFunction fun(s: string): string
----@alias ConfigString string | ConfigStringFunction
+---@generic T
+---@alias ConfigVarFunction fun(prev: T): T
+---@alias ConfigVar T | ConfigVarFunction<T>
 
 ---@class ConfigBase
----@field cflags? ConfigString
----@field lflags? ConfigString
----@field objdir? ConfigString
----@field bindir? ConfigString
+---@field cflags? ConfigVar<string[]>
+---@field lflags? ConfigVar<string[]>
+---@field objdir? ConfigVar<string>
+---@field bindir? ConfigVar<string>
 ---@field coutputs? string[]
 ---@field loutputs? string[]
 
 ---@class ConfigBuildtype : ConfigBase
----@field suffix? ConfigString
+---@field suffix? ConfigVar<string>
 
 ---@alias ConfigBuildtypes { [string]: ConfigBuildtype }
 
@@ -21,8 +22,8 @@
 ---@class Config
 CONFIG = {
 	base = {
-		cflags = "",
-		lflags = "",
+		cflags = {},
+		lflags = {},
 		objdir = "obj/",
 		bindir = "bin/",
 		coutputs = {},
@@ -39,15 +40,28 @@ CONFIG = {
 }
 CONFIG.__index = CONFIG
 
+---@generic T
+---@param func fun(value: T)
+---@param ... T[]
+function ForEach(func, ...)
+	local args = { ... }
+	for _, arg in ipairs(args) do
+		for _, value in ipairs(arg) do
+			func(value)
+		end
+	end
+end
+
 ---@param flag string
----@return ConfigStringFunction
+---@return ConfigVarFunction<string[]>
 function flag_remove(flag)
-	return function(s)
-		s = s:gsub((" " .. flag .. " "), " ")
-		s = s:gsub(("^" .. flag .. " "), " ")
-		s = s:gsub((" " .. flag .. "$"), " ")
-		s = s:gsub(("^" .. flag .. "$"), "")
-		return s
+	return function(prev)
+		for i, prev_flag in ipairs(prev) do
+			if (prev_flag == flag) then
+				table.remove(prev, i)
+			end
+		end
+		return prev
 	end
 end
 
@@ -62,21 +76,15 @@ function merge(v, tbl, index)
 		elseif merged:sub(-1) == " " then
 			error("Merged variables should not end with spaces: " .. merged, 3)
 		end
-
-		-- By only space-separating flags, we allow custom directories.
-		if ((index:sub(-5) == "flags") and (v ~= "") and (merged ~= "")) then
-			return (v .. " " .. merged)
-		else
-			return (v .. merged)
-		end
+		return (v .. merged)
 	elseif merge_type == "table" then
 		local ret = { table.unpack(v) } -- Create a shallow copy
 		for key, value in pairs(tbl[index]) do
 			table.insert(ret, key, value)
 		end
 		return ret
-	elseif merge_type == "function" then
-		return tbl[index](v)
+	elseif ((v_type == "table") and (merge_type == "function")) then
+		return tbl[index]({ table.unpack(v) })
 	end
 	error(string.format(
 		"No merging rule defined for %s←%s", v_type, merge_type
@@ -175,6 +183,16 @@ function sourcepath(path)
 			return ret
 		end
 	}
+end
+
+---Concatenates `flags` with a leading whitespace if not empty.
+---@param ... string[]
+function ConcatFlags(...)
+	local ret = ""
+	ForEach(function (flag)
+		ret = (ret .. " " .. flag)
+	end, ...)
+	return ret
 end
 
 tup.include(string.format("Tuprules.%s.lua", tup.getconfig("TUP_PLATFORM")))

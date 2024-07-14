@@ -1,10 +1,10 @@
-CONFIG.buildtypes.debug.cflags = "/MDd /Od /ZI"
-CONFIG.buildtypes.debug.lflags = ""
+CONFIG.buildtypes.debug.cflags = { "/MDd", "/Od", "/ZI" }
+CONFIG.buildtypes.debug.lflags = {}
 CONFIG.buildtypes.debug.coutputs = { "%O.idb" }
 CONFIG.buildtypes.debug.loutputs = { "%O.ilk" }
 
-CONFIG.buildtypes.release.cflags = "/MT /O2 /GL /Zi /DNDEBUG"
-CONFIG.buildtypes.release.lflags = "/OPT:REF /OPT:ICF /LTCG"
+CONFIG.buildtypes.release.cflags = { "/MT", "/O2", "/GL", "/Zi", "/DNDEBUG" }
+CONFIG.buildtypes.release.lflags = { "/OPT:REF", "/OPT:ICF", "/LTCG" }
 CONFIG.buildtypes.release.coutputs = { }
 CONFIG.buildtypes.release.loutputs = { }
 
@@ -24,9 +24,9 @@ function cxx(configs, inputs)
 				-- really like to avoid that ghost node, which causes a second
 				-- unnecessary link pass if tup is launched immediately after a
 				-- successful build.
-				"/Fd:%O.pdb " ..
+				"/Fd:%O.pdb" ..
 
-				configs.base.cflags .. " " .. vars.cflags .. " \"%f\""
+				ConcatFlags(configs.base.cflags, vars.cflags) .. " \"%f\""
 			), outputs
 		)
 		ret[buildtype] += objs
@@ -63,9 +63,8 @@ function dll(configs, inputs, name)
 		outputs["extra_outputs"] += vars.loutputs
 		tup.rule(
 			inputs[buildtype], (
-				"link /nologo /DEBUG:FULL /DLL /NOEXP /IMPLIB:" .. lib .. " " ..
-				configs.base.lflags .. " " ..
-				vars.lflags .. " " ..
+				"link /nologo /DEBUG:FULL /DLL /NOEXP /IMPLIB:" .. lib ..
+				ConcatFlags(configs.base.lflags, vars.lflags) .. " " ..
 				"/MANIFEST:EMBED /PDBALTPATH:" .. basename .. ".pdb /out:%o %f"
 			),
 			outputs
@@ -87,9 +86,8 @@ function exe(configs, inputs, exe_basename)
 		outputs["extra_outputs"] += vars.loutputs
 		ret[buildtype] += tup.rule(
 			inputs[buildtype], (
-				"link /nologo /DEBUG:FULL " ..
-				configs.base.lflags .. " " ..
-				vars.lflags .. " " ..
+				"link /nologo /DEBUG:FULL" ..
+				ConcatFlags(configs.base.lflags, vars.lflags) .. " " ..
 				"/MANIFEST:EMBED /PDBALTPATH:" .. basename .. ".pdb /out:%o %f"
 			),
 			outputs
