@@ -195,12 +195,16 @@ function sourcepath(path)
 	}
 end
 
----Concatenates `flags` with a leading whitespace if not empty.
+---Deduplicates and concatenates `flags` with a leading whitespace.
 ---@param ... string[]
 function ConcatFlags(...)
+	local seen = {}
 	local ret = ""
 	ForEach(function (flag)
-		ret = (ret .. " " .. flag)
+		if not seen[flag] then
+			seen[flag] = true
+			ret = (ret .. " " .. flag)
+		end
 	end, ...)
 	return ret
 end

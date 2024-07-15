@@ -73,7 +73,8 @@ THE_LIB_COMPILE = {
 
 		-- Multiple flags should be passed as a table. Every logical flag
 		-- should be its own element, and can consist of multiple
-		-- space-separated words.
+		-- space-separated words. This allows redundant flags to be
+		-- deduplicated when building the final command lines.
 		debug = { "/DDEBUG", "/DDEBUG_VERBOSE" },
 
 		-- The base CONFIG table uses the /GL flag for Visual Studio release
