@@ -68,6 +68,20 @@ function cxxm(configs, inputs)
 	}
 	module_compile.cflags += module_cflags
 
+	-- Transparent support for /analyze…
+	---@param flag string
+	local function has_analyze(flag)
+		-- Thankfully, cl.exe checks for this flag in a case-sensitive way.
+		return (flag:match("/analyze") ~= nil)
+	end
+
+	local buildtypes = configs:render_for_buildtypes("cflags")
+	for buildtype, vars in pairs(buildtypes) do
+		if MatchesAny(has_analyze, vars.cflags) then
+			module_compile.coutputs[buildtype] = { "%O.ifcast" }
+		end
+	end
+
 	local module_obj = cxx(configs:branch(module_compile), inputs)
 
 	---@type ConfigShape
@@ -85,6 +99,9 @@ function cxxm(configs, inputs)
 				"/reference %s=%s", module, ifc:gsub("/", "\\")
 			)
 			ret.cinputs[buildtype] += ifc
+			if (module_compile.coutputs[buildtype] ~= nil) then
+				ret.cinputs[buildtype] += obj:gsub(".obj$", ".ifcast")
+			end
 			ret.lflags[buildtype] += obj
 		end
 		ret.linputs[buildtype] += objs

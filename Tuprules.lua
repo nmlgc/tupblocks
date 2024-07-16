@@ -31,6 +31,21 @@ function ForEach(func, ...)
 	end
 end
 
+---@generic T
+---@param func fun(value: T): boolean
+---@param ... T[]
+function MatchesAny(func, ...)
+	local args = { ... }
+	for _, arg in ipairs(args) do
+		for _, value in ipairs(arg) do
+			if func(value) then
+				return true
+			end
+		end
+	end
+	return false
+end
+
 ---@param flag string
 ---@return ConfigVarFunction<string[]>
 function flag_remove(flag)
