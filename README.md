@@ -17,15 +17,7 @@ Currently only supporting Visual Studio compilers on Windows.
 * Build **types** are our concept of variants, and are always part of the regular build graph.
 
   [Tup's variant feature](https://gittup.org/tup/manual.html#lbAL) replaces the regular in-tree build paradigm with an out-of-tree build, and even duplicates the entire directory structure of the tree inside the variant directory.
-  I don't like this, so let's just duplicate build rules and distinguish buildtypes with tried-and-true suffixes.
-
-* Each configuration decides which buildtypes it is built for.
-
-  The above point would cause every variant to always be built.
-  Since this can lead to unreasonably long build times, the set of buildtypes can be filtered when branching off a new configuration, e.g. based on a `CONFIG_` variable.\
-  This can be helpful when building with third-party libraries.
-  During development on a local machine, you'd typically want these to be available in both debug and release buildtypes at any time, but you still want to switch between *only* a debug or a release build to keep build times low.
-  By only filtering buildtypes for your own code using a `CONFIG_` variable, Tup will retain both the debug and release rules for libraries and thus won't need to rebuild the library when switching.
+  I don't like this, so let's just duplicate build rules and distinguish buildtypes with tried-and-true suffixes. If you only need to build a subset of a project's buildtypes, use [Tup's partial update feature](https://gittup.org/tup/manual.html#lbAD) to skip the others while leaving any of their previous outputs in the tree.
 
 ## Usage
 
@@ -99,9 +91,8 @@ THE_LIB_LINK = {
 }
 
 -- Create the actual configuration by branching off from the root and adding
--- the compile and link flags. The empty filter indicates that this
--- configuration will be built for all buildtypes.
-the_lib_cfg = CONFIG:branch("", THE_LIB_COMPILE, THE_LIB_LINK)
+-- the compile and link flags.
+the_lib_cfg = CONFIG:branch(THE_LIB_COMPILE, THE_LIB_LINK)
 
 -- Define the source files. When using the glob() function of a sourcepath(),
 -- you can filter the list of source files by using the `-` operator and
@@ -120,10 +111,8 @@ the_lib_dll = dll(the_lib_cfg, the_lib_obj, "the_lib")
 -- Define the project itself.
 PROJECT = sourcepath("src_of_project/")
 
--- If `CONFIG_BUILDTYPE` is specified in `tup.config`, this configuration will
--- only be built for that type. Since we don't need our flags anywhere else,
--- we just merge them directly instead of storing them in a separate table.
-project_cfg = CONFIG:branch(tup.getconfig("BUILDTYPE"), THE_LIB_LINK, {
+-- Since we don't need our flags anywhere else, we just inline the table.
+project_cfg = CONFIG:branch(THE_LIB_LINK, {
 	base = {
 		cflags = (
 			"/std:c++latest " ..

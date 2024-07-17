@@ -76,10 +76,9 @@ function merge(v, tbl, index)
 	return v
 end
 
----@param buildtype_filter string
 ---@param ... ConfigShape
 ---@return Config
-function CONFIG:branch(buildtype_filter, ...)
+function CONFIG:branch(...)
 	local arg = { ... }
 
 	---@type Config
@@ -102,14 +101,12 @@ function CONFIG:branch(buildtype_filter, ...)
 		ret.base[k] = v
 	end
 	for buildtype, vars in pairs(self.buildtypes) do
-		if (buildtype_filter == "") or (buildtype == buildtype_filter) then
-			ret.buildtypes[buildtype] = {}
-			for k, v in pairs(vars) do
-				for _, other in pairs(arg) do
-					v = merge(v, (other.buildtypes or {})[buildtype], k)
-				end
-				ret.buildtypes[buildtype][k] = v
+		ret.buildtypes[buildtype] = {}
+		for k, v in pairs(vars) do
+			for _, other in pairs(arg) do
+				v = merge(v, (other.buildtypes or {})[buildtype], k)
 			end
+			ret.buildtypes[buildtype][k] = v
 		end
 	end
 	return ret
