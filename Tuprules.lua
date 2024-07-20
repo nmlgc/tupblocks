@@ -37,6 +37,7 @@ CONFIG = {
 		},
 	},
 }
+CONFIG.__index = CONFIG
 
 ---@param flag string
 ---@return ConfigStringFunction
@@ -87,12 +88,9 @@ end
 function CONFIG:branch(...)
 	local arg = { ... }
 
-	---@type Config
-	local ret = {
-		base = {},
-		buildtypes = {},
-		branch = CONFIG.branch,
-	}
+	---@class Config
+	local ret = setmetatable({ base = {}, buildtypes = {} }, self)
+	ret.__index = self
 
 	for k, v in pairs(self.base) do
 		for _, other in pairs(arg) do
