@@ -65,29 +65,28 @@ function flag_remove(flag)
 	end
 end
 
----@return any merged Clone of `v` with `tbl[index]` merged into it.
-function merge(v, tbl, index)
+---@return any merged Clone of `v` with `other` merged into it.
+function Merge(v, other)
 	local v_type = type(v)
-	merge_type = type((tbl or {})[index])
-	if merge_type == "string" then
-		local merged = tbl[index]
-		if merged:sub(0, 1) == " " then
-			error("Merged variables should not start with spaces:" .. merged, 3)
-		elseif merged:sub(-1) == " " then
-			error("Merged variables should not end with spaces: " .. merged, 3)
+	local other_type = type(other)
+	if (other_type == "string") then
+		if other:sub(0, 1) == " " then
+			error("Merged variables should not start with spaces:" .. other, 3)
+		elseif other:sub(-1) == " " then
+			error("Merged variables should not end with spaces: " .. other, 3)
 		end
-		return (v .. merged)
-	elseif merge_type == "table" then
-		local ret = { table.unpack(v) } -- Create a shallow copy
-		for key, value in pairs(tbl[index]) do
-			table.insert(ret, key, value)
+		return (v .. other)
+	elseif (other_type == "table") then
+		local ret = { table.unpack(v) }	-- Create a shallow copy
+		for key, value in pairs(other) do
+			table.insert(v, key, value)
 		end
 		return ret
-	elseif ((v_type == "table") and (merge_type == "function")) then
-		return tbl[index]({ table.unpack(v) })
+	elseif ((v_type == "table") and (other_type == "function")) then
+		return other({ table.unpack(v) })
 	end
 	error(string.format(
-		"No merging rule defined for %s←%s", v_type, merge_type
+		"No merging rule defined for %s←%s", v_type, other_type
 	))
 end
 
@@ -108,7 +107,7 @@ function CONFIG:branch(...)
 					"Configurations should not be combined with each other", 2
 				)
 			end
-			v = merge(v, other.base, k)
+			v = Merge(v, (other.base or {})[k])
 		end
 		ret.base[k] = v
 	end
@@ -116,7 +115,7 @@ function CONFIG:branch(...)
 		ret.buildtypes[buildtype] = {}
 		for k, v in pairs(vars) do
 			for _, other in pairs(arg) do
-				v = merge(v, (other.buildtypes or {})[buildtype], k)
+				v = Merge(v, ((other.buildtypes or {})[buildtype] or {})[k])
 			end
 			ret.buildtypes[buildtype][k] = v
 		end
