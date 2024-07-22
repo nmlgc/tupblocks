@@ -65,25 +65,61 @@ function flag_remove(flag)
 	end
 end
 
+---Deep-clones both the array and associative parts of `table`.
+---@param table table
+local function table_clone(table)
+	local ret = {}
+	for key, value in pairs(table) do
+		if ((type(value) == "table") and (key ~= "__index")) then
+			ret[key] = table_clone(value)
+		else
+			ret[key] = value
+		end
+	end
+	return ret
+end
+
+---Extends `t` in-place with the contents of `other`. Returns `table`.
+---@param t table
+---@param other any
+function TableExtend(t, other)
+	if (other == nil) then
+		return t
+	end
+	local other_type = type(other)
+	if (other_type == "table") then
+		t += other -- Append the array part via Tup's faster C extension
+		for k, o in pairs(other) do -- Merge the associative part
+			if (type(k) == "string") then
+				local tk_type = type(t[k])
+				local o_type = type(o)
+				if ((tk_type == "table") or (o_type == "table")) then
+					t[k] = TableExtend((t[k] or {}), o)
+				end
+			end
+		end
+	elseif (other_type == "function") then
+		return other(t)
+	end
+	return t
+end
+
 ---@return any merged Clone of `v` with `other` merged into it.
 function Merge(v, other)
 	local v_type = type(v)
 	local other_type = type(other)
-	if (other_type == "string") then
+	if (v_type == "string") then
+		if (other == nil) then
+			return v
+		end
 		if other:sub(0, 1) == " " then
 			error("Merged variables should not start with spaces:" .. other, 3)
 		elseif other:sub(-1) == " " then
 			error("Merged variables should not end with spaces: " .. other, 3)
 		end
 		return (v .. other)
-	elseif (other_type == "table") then
-		local ret = { table.unpack(v) }	-- Create a shallow copy
-		for key, value in pairs(other) do
-			table.insert(v, key, value)
-		end
-		return ret
-	elseif ((v_type == "table") and (other_type == "function")) then
-		return other({ table.unpack(v) })
+	elseif (v_type == "table") then
+		return TableExtend(table_clone(v), other)
 	end
 	error(string.format(
 		"No merging rule defined for %s←%s", v_type, other_type
@@ -123,27 +159,8 @@ function CONFIG:branch(...)
 	return ret
 end
 
--- Inspired by https://stackoverflow.com/a/1283608.
 function table_merge(t1, t2)
-	-- The caller expects [t1] to remain unmodified, so we create a shallow copy
-	local ret = {}
-	for k, v in pairs(t1) do
-		ret[k] = v
-	end
-	setmetatable(ret, getmetatable(t1))
-
-	for k, v in pairs(t2) do
-		if type(v) == "table" then
-			if type(ret[k] or false) == "table" then
-				ret[k] = table_merge(ret[k] or {}, t2[k] or {})
-			elseif (type(v) ~= 'function') then
-				ret[k] = v
-			end
-		elseif (type(v) ~= 'function') then
-			ret += v
-		end
-	end
-	return ret
+	return setmetatable(TableExtend(table_clone(t1), t2), getmetatable(t1))
 end
 
 -- https://stackoverflow.com/a/49709999
