@@ -98,6 +98,8 @@ function TableExtend(t, other)
 				end
 			end
 		end
+	elseif (other_type == "string") then
+		table.insert(t, other)
 	elseif (other_type == "function") then
 		return other(t)
 	end

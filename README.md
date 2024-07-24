@@ -66,11 +66,14 @@ THE_LIB = sourcepath("vendor/a_thirdparty_library/")
 -- }
 THE_LIB_COMPILE = {
 	base = {
-		cflags = { "/DDLL_EXPORT" }, -- required by the library for DLL builds
+		cflags = "/DDLL_EXPORT", -- required by the library for DLL builds
 		objdir = "the_lib/", -- creates a new namespace for object files
 	},
 	buildtypes = {
-		debug = { cflags = { "/DDEBUG" } },
+		-- Multiple flags should be passed as a table. Every logical flag
+		-- should be its own element, and can consist of multiple
+		-- space-separated words.
+		debug = { cflags = { "/DDEBUG", "/DDEBUG_VERBOSE" } },
 
 		-- The base CONFIG table uses the /GL flag for Visual Studio release
 		-- builds by default, but this library doesn't like it. Merged settings
@@ -84,11 +87,7 @@ THE_LIB_COMPILE = {
 }
 
 -- Flags for linking to the library.
-THE_LIB_LINK = {
-	base = {
-		cflags = { ("-I" .. THE_LIB.join("include/")) },
-	},
-}
+THE_LIB_LINK = { base = { cflags = ("-I" .. THE_LIB.join("include/")) } }
 
 -- Create the actual configuration by branching off from the root and adding
 -- the compile and link flags.
@@ -114,8 +113,6 @@ PROJECT = sourcepath("src_of_project/")
 -- Since we don't need our flags anywhere else, we just inline the table.
 project_cfg = CONFIG:branch(THE_LIB_LINK, {
 	base = {
-		-- Flags are stored as tables. Every logical flag should be its own
-		-- element, and can consist of multiple space-separated words.
 		cflags = {
 			"/std:c++latest",
 			("/I" .. PROJECT.root),
