@@ -79,6 +79,17 @@ local function table_clone(table)
 	return ret
 end
 
+---@param s1 string
+---@param s2 string
+local function merge_string(s1, s2)
+	if s2:sub(0, 1) == " " then
+		error("Merged variables should not start with spaces:" .. s2, 4)
+	elseif s2:sub(-1) == " " then
+		error("Merged variables should not end with spaces: " .. s2, 4)
+	end
+	return (s1 .. s2)
+end
+
 ---Extends `t` in-place with the contents of `other`. Returns `table`.
 ---@param t table
 ---@param other any
@@ -95,6 +106,10 @@ function TableExtend(t, other)
 				local o_type = type(o)
 				if ((tk_type == "table") or (o_type == "table")) then
 					t[k] = TableExtend((t[k] or {}), o)
+				elseif ((tk_type == "string") and (o_type == "string")) then
+					t[k] = merge_string(t[k], o)
+				else
+					t[k] = o
 				end
 			end
 		end
@@ -106,57 +121,20 @@ function TableExtend(t, other)
 	return t
 end
 
----@return any merged Clone of `v` with `other` merged into it.
-function Merge(v, other)
-	local v_type = type(v)
-	local other_type = type(other)
-	if (v_type == "string") then
-		if (other == nil) then
-			return v
-		end
-		if other:sub(0, 1) == " " then
-			error("Merged variables should not start with spaces:" .. other, 3)
-		elseif other:sub(-1) == " " then
-			error("Merged variables should not end with spaces: " .. other, 3)
-		end
-		return (v .. other)
-	elseif (v_type == "table") then
-		return TableExtend(table_clone(v), other)
-	end
-	error(string.format(
-		"No merging rule defined for %s←%s", v_type, other_type
-	))
-end
-
 ---@param ... ConfigShape
 ---@return Config
 function CONFIG:branch(...)
 	local arg = { ... }
 
 	---@class Config
-	local ret = setmetatable({ base = {}, buildtypes = {} }, self)
-	ret.__index = self
+	local ret = table_clone(self)
 
-	for k, v in pairs(self.base) do
-		for _, other in pairs(arg) do
-			---@cast other +Config
-			if other.branch then
-				error(
-					"Configurations should not be combined with each other", 2
-				)
-			end
-			v = Merge(v, (other.base or {})[k])
+	for _, other in pairs(arg) do
+		---@cast other +Config
+		if other.branch then
+			error("Configurations should not be combined with each other", 2)
 		end
-		ret.base[k] = v
-	end
-	for buildtype, vars in pairs(self.buildtypes) do
-		ret.buildtypes[buildtype] = {}
-		for k, v in pairs(vars) do
-			for _, other in pairs(arg) do
-				v = Merge(v, ((other.buildtypes or {})[buildtype] or {})[k])
-			end
-			ret.buildtypes[buildtype][k] = v
-		end
+		TableExtend(ret, other)
 	end
 	return ret
 end
