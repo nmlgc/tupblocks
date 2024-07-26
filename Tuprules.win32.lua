@@ -1,12 +1,14 @@
-CONFIG.buildtypes.debug.cflags = { "/MDd", "/Od", "/ZI" }
-CONFIG.buildtypes.debug.lflags = {}
-CONFIG.buildtypes.debug.coutputs = { "%O.idb" }
-CONFIG.buildtypes.debug.loutputs = { "%O.ilk" }
-
-CONFIG.buildtypes.release.cflags = { "/MT", "/O2", "/GL", "/Zi", "/DNDEBUG" }
-CONFIG.buildtypes.release.lflags = { "/OPT:REF", "/OPT:ICF", "/LTCG" }
-CONFIG.buildtypes.release.coutputs = { }
-CONFIG.buildtypes.release.loutputs = { }
+CONFIG = CONFIG:branch({ buildtypes = {
+	debug = {
+		cflags = { "/MDd", "/Od", "/ZI" },
+		coutputs = { "%O.idb" },
+		loutputs = { "%O.ilk" },
+	},
+	release = {
+		cflags = { "/MT", "/O2", "/GL", "/Zi", "/DNDEBUG" },
+		lflags = { "/OPT:REF", "/OPT:ICF", "/LTCG" },
+	},
+} })
 
 ---@param configs Config
 function cxx(configs, inputs)
