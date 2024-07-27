@@ -55,25 +55,26 @@ THE_LIB = sourcepath("vendor/a_thirdparty_library/")
 
 -- Define the flags exclusive to this library, as separate tables. All of these
 -- configuration and flag tables follow the `ConfigShape` class declared in
--- `Tuprules.lua`:
+-- `Tuprules.lua`, with additional fields defined in the toolchain-specific
+-- scripts.
 --
--- {
--- 	base = { (compiler settings…) },
--- 	buildtypes= {
--- 		debug = { (compiler settings…) },
--- 		release = { (compiler settings…) },
--- 	}
--- }
+-- The `ConfigVarBuildtyped` fields consist of
+-- • an array of generic arguments in the integer part of their table, and
+-- • buildtype-specific values in the associative part, using the name of the
+--   buildtype as the key of another array.
+-- The existing buildtypes are determined by looking at these tables and don't
+-- need to be separately declared. The toolchain-specific scripts typically
+-- inject default arguments for `debug` and `release` buildtypes into the root
+-- configuration.
 THE_LIB_COMPILE = {
-	base = {
-		cflags = "/DDLL_EXPORT", -- required by the library for DLL builds
-		objdir = "the_lib/", -- creates a new namespace for object files
-	},
-	buildtypes = {
+	cflags = {
+		-- Required by the library for DLL builds. Used for every buildtype.
+		"/DDLL_EXPORT",
+
 		-- Multiple flags should be passed as a table. Every logical flag
 		-- should be its own element, and can consist of multiple
 		-- space-separated words.
-		debug = { cflags = { "/DDEBUG", "/DDEBUG_VERBOSE" } },
+		debug = { "/DDEBUG", "/DDEBUG_VERBOSE" },
 
 		-- The base CONFIG table uses the /GL flag for Visual Studio release
 		-- builds by default, but this library doesn't like it. Merged settings
@@ -83,11 +84,12 @@ THE_LIB_COMPILE = {
 		--
 		-- https://github.com/libsdl-org/SDL/commit/ae7446a9591299eef719f82403c
 		release = { cflags = flag_remove("/GL") }
-	}
+	},
+	objdir = "the_lib/", -- creates a new namespace for object files
 }
 
 -- Flags for linking to the library.
-THE_LIB_LINK = { base = { cflags = ("-I" .. THE_LIB.join("include/")) } }
+THE_LIB_LINK = { cflags = ("-I" .. THE_LIB.join("include/")) }
 
 -- Create the actual configuration by branching off from the root and adding
 -- the compile and link flags.
@@ -112,15 +114,13 @@ PROJECT = sourcepath("src_of_project/")
 
 -- Since we don't need our flags anywhere else, we just inline the table.
 project_cfg = CONFIG:branch(THE_LIB_LINK, {
-	base = {
-		cflags = {
-			"/std:c++latest",
-			("/I" .. PROJECT.root),
-			"/source-charset:utf-8",
-			"/execution-charset:utf-8",
-		},
-		objdir = "project/",
+	cflags = {
+		"/std:c++latest",
+		("/I" .. PROJECT.root),
+		"/source-charset:utf-8",
+		"/execution-charset:utf-8",
 	},
+	objdir = "project/",
 })
 
 project_src += PROJECT.glob("*.cpp")

@@ -1,41 +1,20 @@
 ---@generic T
 ---@alias ConfigVarFunction fun(prev: T): T
 ---@alias ConfigVar T | ConfigVarFunction<T>
-
----@class ConfigBase
----@field cflags? ConfigVar<string[]>
----@field lflags? ConfigVar<string[]>
----@field objdir? ConfigVar<string>
----@field bindir? ConfigVar<string>
----@field coutputs? string[]
----@field loutputs? string[]
-
----@class ConfigBuildtype : ConfigBase
----@field suffix? ConfigVar<string>
-
----@alias ConfigBuildtypes { [string]: ConfigBuildtype }
+---@alias ConfigVarBuildtyped { [integer]: ConfigVar, [string]: ConfigVar[] }
 
 ---@class ConfigShape
----@field base? ConfigBase
----@field buildtypes? ConfigBuildtypes
+---@field objdir? ConfigVar<string>
+---@field bindir? ConfigVar<string>
+---@field suffix? ConfigVarBuildtyped<string>
 
 ---@class Config
+---@field vars ConfigShape
 CONFIG = {
-	base = {
-		cflags = {},
-		lflags = {},
+	vars = {
 		objdir = "obj/",
 		bindir = "bin/",
-		coutputs = {},
-		loutputs = {},
-	},
-	buildtypes = {
-		debug = {
-			suffix = "d",
-		},
-		release = {
-			suffix = "",
-		},
+		suffix = { debug = "d" },
 	},
 }
 CONFIG.__index = CONFIG
@@ -134,7 +113,32 @@ function CONFIG:branch(...)
 		if other.branch then
 			error("Configurations should not be combined with each other", 2)
 		end
-		TableExtend(ret, other)
+		TableExtend(ret.vars, other)
+	end
+
+	-- Discover buildtypes
+	ret.buildtypes = {}
+	for _, var in pairs(ret.vars) do
+		if (type(var) == "table") then
+			for buildtype, _ in pairs(var) do
+				if (type(buildtype) == "string") then
+					ret.buildtypes[buildtype] = {}
+				end
+			end
+		end
+	end
+	return ret
+end
+
+---@param ... string
+function CONFIG:render_for_buildtypes(...)
+	local fields = { ... }
+	local ret = table_clone(self.buildtypes)
+	for _, field in pairs(fields) do
+		for buildtype, rendered in pairs(ret) do
+			rendered[field] += self.vars[field]
+			rendered[field] += self.vars[field][buildtype]
+		end
 	end
 	return ret
 end
