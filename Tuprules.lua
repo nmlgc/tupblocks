@@ -134,10 +134,20 @@ end
 function CONFIG:render_for_buildtypes(...)
 	local fields = { ... }
 	local ret = table_clone(self.buildtypes)
-	for _, field in pairs(fields) do
+	for _, field_in in pairs(fields) do
 		for buildtype, rendered in pairs(ret) do
-			rendered[field] += self.vars[field]
-			rendered[field] += self.vars[field][buildtype]
+			local field_out = field_in
+			if (field_in:sub(-7) == "outputs") then
+				rendered[field_in] = {}
+				rendered = rendered[field_in]
+				field_out = "extra_outputs"
+			elseif (field_in:sub(-6) == "inputs") then
+				rendered[field_in] = {}
+				rendered = rendered[field_in]
+				field_out = "extra_inputs"
+			end
+			rendered[field_out] += self.vars[field_in]
+			rendered[field_out] += self.vars[field_in][buildtype]
 		end
 	end
 	return ret

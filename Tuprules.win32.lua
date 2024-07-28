@@ -23,9 +23,8 @@ function cxx(configs, inputs)
 		"cflags", "coutputs", "suffix"
 	)
 	for buildtype, vars in pairs(buildtypes) do
-		outputs = { (configs.vars.objdir .. "%B" .. vars.suffix .. ".obj") }
-		outputs["extra_outputs"] = { "%O.pdb" }
-		outputs["extra_outputs"] += vars.coutputs
+		vars.coutputs += (configs.vars.objdir .. "%B" .. vars.suffix .. ".obj")
+		vars.coutputs.extra_outputs += { "%O.pdb" }
 		objs = tup.foreach_rule(
 			inputs, (
 				"cl /nologo /c /Qpar /Fo:%o " ..
@@ -37,7 +36,7 @@ function cxx(configs, inputs)
 				"/Fd:%O.pdb" ..
 
 				ConcatFlags(vars.cflags) .. " \"%f\""
-			), outputs
+			), vars.coutputs
 		)
 		ret[buildtype] += objs
 		for _, fn in pairs(objs) do
@@ -70,16 +69,15 @@ function dll(configs, inputs, name)
 		local basename = (name .. vars.suffix)
 		local lib = (configs.vars.objdir .. basename .. ".lib")
 		local dll = (configs.vars.bindir .. basename .. ".dll")
-		local outputs = { dll }
-		outputs["extra_outputs"] = { "%O.pdb", lib }
-		outputs["extra_outputs"] += vars.loutputs
+		vars.loutputs += dll
+		vars.loutputs.extra_outputs += { "%O.pdb", lib }
 		tup.rule(
 			inputs[buildtype], (
 				"link /nologo /DEBUG:FULL /DLL /NOEXP /IMPLIB:" .. lib ..
 				ConcatFlags(vars.lflags) .. " " ..
 				"/MANIFEST:EMBED /PDBALTPATH:" .. basename .. ".pdb /out:%o %f"
 			),
-			outputs
+			vars.loutputs
 		)
 		ret[buildtype] += lib
 	end
@@ -95,16 +93,15 @@ function exe(configs, inputs, exe_basename)
 	)
 	for buildtype, vars in pairs(buildtypes) do
 		basename = (exe_basename .. vars.suffix)
-		outputs = { (configs.vars.bindir .. "/" .. basename .. ".exe") }
-		outputs["extra_outputs"] = { "%O.pdb" }
-		outputs["extra_outputs"] += vars.loutputs
+		vars.loutputs += (configs.vars.bindir .. "/" .. basename .. ".exe")
+		vars.loutputs.extra_outputs += { "%O.pdb" }
 		ret[buildtype] += tup.rule(
 			inputs[buildtype], (
 				"link /nologo /DEBUG:FULL" ..
 				ConcatFlags(vars.lflags) .. " " ..
 				"/MANIFEST:EMBED /PDBALTPATH:" .. basename .. ".pdb /out:%o %f"
 			),
-			outputs
+			vars.loutputs
 		)
 	end
 	return ret
