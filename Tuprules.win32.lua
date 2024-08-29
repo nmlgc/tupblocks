@@ -151,8 +151,8 @@ function dll(configs, inputs, name)
 		tup.rule(
 			TableExtend(vars.linputs, inputs[buildtype]), (
 				"link /nologo /DEBUG:FULL /DLL /NOEXP /IMPLIB:" .. lib ..
-				ConcatFlags(vars.lflags) .. " " ..
-				"/MANIFEST:EMBED /PDBALTPATH:" .. basename .. ".pdb /out:%o %f"
+				ConcatFlags(vars.lflags) .. " /MANIFEST:EMBED " ..
+				'/PDBALTPATH:"' .. basename .. '".pdb /out:"%o" %f'
 			),
 			vars.loutputs
 		)
@@ -175,8 +175,8 @@ function exe(configs, inputs, exe_basename)
 		ret[buildtype] += tup.rule(
 			TableExtend(vars.linputs, inputs[buildtype]), (
 				"link /nologo /DEBUG:FULL" ..
-				ConcatFlags(vars.lflags) .. " " ..
-				"/MANIFEST:EMBED /PDBALTPATH:" .. basename .. ".pdb /out:%o %f"
+				ConcatFlags(vars.lflags) .. " /MANIFEST:EMBED " ..
+				'/PDBALTPATH:"' .. basename .. '.pdb" /out:"%o" %f'
 			),
 			vars.loutputs
 		)
