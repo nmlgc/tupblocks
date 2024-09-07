@@ -8,15 +8,15 @@
 
 CONFIG = CONFIG:branch({
 	cflags = {
-		debug = { "/MDd", "/Od", "/ZI" },
-		release = { "/MT", "/O2", "/GL", "/Zi", "/DNDEBUG" },
+		debug = { "/MDd", "/Od" },
+		release = { "/MT", "/O2", "/GL", "/DNDEBUG" },
 	},
 	lflags = {
 		release = { "/OPT:REF", "/OPT:ICF", "/LTCG" },
 	},
 	cinputs = {},
 	linputs = {},
-	coutputs = { debug = { "%O.idb" } },
+	coutputs = {},
 	loutputs = { debug = { "%O.ilk" } },
 })
 
@@ -32,7 +32,7 @@ function cxx(configs, inputs)
 		vars.coutputs.extra_outputs += { "%O.pdb" }
 		objs = tup.foreach_rule(
 			vars.cinputs, (
-				"cl /nologo /c /Qpar /Fo:%o " ..
+				"cl /nologo /c /Qpar /Zi /Fo:%o " ..
 
 				-- /Fd is a rather clunky way of overriding vc140.pdb, but we'd
 				-- really like to avoid that ghost node, which causes a second
