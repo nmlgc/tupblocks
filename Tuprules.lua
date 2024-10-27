@@ -187,7 +187,7 @@ end
 
 ---@param name string
 ---@param ext string
----@param rule fun(vars: table, basename: string): table Runs the build rule and returns inputs for further rules.
+---@param rule fun(vars: table, basename: string, inps: string): table Runs the build rule and returns inputs for further rules.
 function CONFIG:CommonL(inputs, name, ext, rule)
 	local ret = {}
 	local buildtypes = self:render_for_buildtypes(
@@ -197,7 +197,11 @@ function CONFIG:CommonL(inputs, name, ext, rule)
 		local basename = (name .. vars.suffix)
 		TableExtend(vars.linputs, inputs[buildtype])
 		vars.loutputs += (self.vars.bindir .. basename .. ext)
-		ret[buildtype] = rule(vars, basename)
+		local inps = ""
+		for _, input in ipairs(vars.linputs) do
+			inps = string.format('%s "%s"', inps, input)
+		end
+		ret[buildtype] = rule(vars, basename, inps)
 	end
 	setmetatable(ret, functional_metatable)
 	return ret

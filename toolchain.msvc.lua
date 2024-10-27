@@ -31,7 +31,7 @@ function cxx(configs, inputs)
 		-- like to avoid that ghost node, which causes a second unnecessary
 		-- link pass if tup is launched immediately after a successful build.
 		local cmd = (
-			"cl /nologo /c /Qpar /Zi /Fo:%o /Fd:%O.pdb" .. flags .. " \"%f\""
+			'cl /nologo /c /Qpar /Zi /Fo:"%o" /Fd:"%O.pdb"' .. flags .. ' "%f"'
 		)
 		local ret = tup.foreach_rule(vars.cinputs, cmd, vars.coutputs)
 		for _, fn in ipairs(ret) do
@@ -52,7 +52,7 @@ function cxxm(configs, inputs)
 
 	---@type ConfigShape
 	local module_compile = {
-		cflags = { "/ifcOutput %O.ifc" },
+		cflags = { '/ifcOutput "%O.ifc"' },
 		coutputs = { "%O.ifc" },
 	}
 	module_compile.cflags += module_cflags
@@ -85,7 +85,7 @@ function cxxm(configs, inputs)
 			local module = tup.base(inputs[i])
 			local ifc = obj:gsub(".obj$", ".ifc")
 			ret.cflags[buildtype] += string.format(
-				"/reference %s=%s", module, ifc:gsub("/", "\\")
+				'/reference %s="%s"', module, ifc:gsub("/", "\\")
 			)
 			ret.cinputs[buildtype] += ifc
 			if (module_compile.coutputs[buildtype] ~= nil) then
@@ -127,13 +127,13 @@ end
 
 ---@param configs Config
 function dll(configs, inputs, name)
-	return configs:CommonL(inputs, name, ".dll", function(vars, basename)
+	return configs:CommonL(inputs, name, ".dll", function(vars, basename, inps)
 		local lib = (configs.vars.objdir .. basename .. ".lib")
 		vars.loutputs.extra_outputs += { "%O.pdb", lib }
 		local cmd = (
 			"link /nologo /DEBUG:FULL /DLL /NOEXP /IMPLIB:" .. lib ..
 			ConcatFlags(vars.lflags) .. " /MANIFEST:EMBED " ..
-			'/PDBALTPATH:"' .. basename .. '".pdb /out:"%o" %f'
+			'/PDBALTPATH:"' .. basename .. '".pdb /out:"%o"' .. inps
 		)
 		tup.rule(vars.linputs, cmd, vars.loutputs)
 		return lib
@@ -142,12 +142,12 @@ end
 
 ---@param configs Config
 function exe(configs, inputs, name)
-	return configs:CommonL(inputs, name, ".exe", function(vars, basename)
+	return configs:CommonL(inputs, name, ".exe", function(vars, basename, inps)
 		vars.loutputs.extra_outputs += { "%O.pdb" }
 		local cmd = (
 			"link /nologo /DEBUG:FULL" ..
 			ConcatFlags(vars.lflags) .. " /MANIFEST:EMBED " ..
-			'/PDBALTPATH:"' .. basename .. '.pdb" /out:"%o" %f'
+			'/PDBALTPATH:"' .. basename .. '.pdb" /out:"%o"' .. inps
 		)
 		return tup.rule(vars.linputs, cmd, vars.loutputs)
 	end)
