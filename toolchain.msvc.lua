@@ -1,3 +1,5 @@
+--- Rule definitions for Microsoft Visual Studio
+
 ---@class ConfigShape
 ---@field cflags? ConfigVarBuildtyped<string>
 ---@field lflags? ConfigVarBuildtyped<string>

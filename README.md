@@ -42,10 +42,14 @@ The `Tupfile.lua` for this example then would look something like this:
 
 ```lua
 -- This repo is designed to be either included as a submodule, or downloaded
--- into your build tree in another way. This file will also include rule
--- functions for the current build platform, together with default flags for
--- debug and release builds.
+-- into your build tree in another way.
 tup.include("vendor/tupblocks/Tuprules.lua")
+
+-- Include the rule functions for the desired build platform, together with
+-- default flags for debug and release builds.
+if tup.getconfig("TUP_PLATFORM") == "win32" then
+	tup.include("vendor/tupblocks/toolchain.msvc.lua")
+end
 
 -- Build the third-party library
 -- -----------------------------

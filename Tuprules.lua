@@ -223,5 +223,3 @@ function ConcatFlags(...)
 	end, ...)
 	return ret
 end
-
-tup.include(string.format("Tuprules.%s.lua", tup.getconfig("TUP_PLATFORM")))
