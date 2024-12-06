@@ -1,13 +1,5 @@
 --- Rule definitions for Microsoft Visual Studio
 
----@class ConfigShape
----@field cflags? ConfigVarBuildtyped<string>
----@field lflags? ConfigVarBuildtyped<string>
----@field cinputs? ConfigVarBuildtyped<string>
----@field linputs? ConfigVarBuildtyped<string>
----@field coutputs? ConfigVarBuildtyped<string>
----@field loutputs? ConfigVarBuildtyped<string>
-
 CONFIG = CONFIG:branch({
 	cflags = {
 		debug = { "/MDd", "/Od" },
@@ -16,9 +8,6 @@ CONFIG = CONFIG:branch({
 	lflags = {
 		release = { "/OPT:REF", "/OPT:ICF", "/LTCG" },
 	},
-	cinputs = {},
-	linputs = {},
-	coutputs = {},
 	loutputs = { debug = { "%O.ilk" } },
 })
 
