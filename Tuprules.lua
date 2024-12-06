@@ -7,6 +7,15 @@
 ---@field objdir? ConfigVar<string>
 ---@field bindir? ConfigVar<string>
 ---@field suffix? ConfigVarBuildtyped<string>
+---Flags added to the command line
+---@field cflags? ConfigVarBuildtyped<string>
+---@field lflags? ConfigVarBuildtyped<string>
+---Order-only inputs
+---@field cinputs? ConfigVarBuildtyped<string>
+---@field linputs? ConfigVarBuildtyped<string>
+---Order-only outputs
+---@field coutputs? ConfigVarBuildtyped<string>
+---@field loutputs? ConfigVarBuildtyped<string>
 
 ---@class Config
 ---@field vars ConfigShape
@@ -15,6 +24,12 @@ CONFIG = {
 		objdir = "obj/",
 		bindir = "bin/",
 		suffix = { debug = "d" },
+		cflags = {},
+		lflags = {},
+		cinputs = {},
+		linputs = {},
+		coutputs = {},
+		loutputs = {},
 	},
 }
 CONFIG.__index = CONFIG

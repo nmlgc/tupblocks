@@ -60,8 +60,7 @@ THE_LIB = sourcepath("vendor/a_thirdparty_library/")
 
 -- Define the flags exclusive to this library, as separate tables. All of these
 -- configuration and flag tables follow the `ConfigShape` class declared in
--- `Tuprules.lua`, with additional fields defined in the toolchain-specific
--- scripts.
+-- `Tuprules.lua`.
 --
 -- The `ConfigVarBuildtyped` fields consist of
 -- • an array of generic arguments in the integer part of their table, and
