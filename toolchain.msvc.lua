@@ -8,7 +8,7 @@ CONFIG = CONFIG:branch({
 	lflags = {
 		release = { "/OPT:REF", "/OPT:ICF", "/LTCG" },
 	},
-	loutputs = { debug = { "%O.ilk" } },
+	loutputs = { debug = { extra_outputs = { "%O.ilk" } } },
 })
 
 ---@param configs Config
@@ -42,7 +42,7 @@ function cxxm(configs, inputs)
 	---@type ConfigShape
 	local module_compile = {
 		cflags = { '/ifcOutput "%O.ifc"' },
-		coutputs = { "%O.ifc" },
+		coutputs = {},
 	}
 	module_compile.cflags += module_cflags
 
@@ -55,35 +55,34 @@ function cxxm(configs, inputs)
 
 	local buildtypes = configs:render_for_buildtypes("cflags")
 	for buildtype, vars in pairs(buildtypes) do
+		-- `extra_outputs` are only supported at the buildtype level.
+		module_compile.coutputs[buildtype] = { extra_outputs = { "%O.ifc" } }
 		if MatchesAny(has_analyze, vars.cflags) then
-			module_compile.coutputs[buildtype] = { "%O.ifcast" }
+			module_compile.coutputs[buildtype].extra_outputs += { "%O.ifcast" }
 		end
 	end
-
-	local module_obj = cxx(configs:branch(module_compile), inputs)
 
 	---@type ConfigShape
 	local ret = {
 		cflags = module_cflags,
 		cinputs = {},
-		lflags = {},
-		linputs = {},
+		linputs = cxx(configs:branch(module_compile), inputs),
 	}
-	for buildtype, objs in pairs(module_obj) do
+	for buildtype, objs in pairs(ret.linputs) do
+		ret.cinputs[buildtype] = {}
 		for i, obj in ipairs(objs) do
 			local module = tup.base(inputs[i])
 			local ifc = obj:gsub(".obj$", ".ifc")
 			ret.cflags[buildtype] += string.format(
 				'/reference %s="%s"', module, ifc:gsub("/", "\\")
 			)
-			ret.cinputs[buildtype] += ifc
-			if (module_compile.coutputs[buildtype] ~= nil) then
-				ret.cinputs[buildtype] += obj:gsub(".obj$", ".ifcast")
+			ret.cinputs[buildtype].extra_inputs += ifc
+			if (#module_compile.coutputs[buildtype].extra_outputs == 2) then
+				ret.cinputs[buildtype].extra_inputs += (
+					obj:gsub(".obj$", ".ifcast")
+				)
 			end
-			ret.lflags[buildtype] += obj
 		end
-		ret.linputs[buildtype] += objs
-		ret.linputs[buildtype] += objs.extra_inputs
 	end
 	return ret
 end
