@@ -10,12 +10,12 @@
 ---Flags added to the command line
 ---@field cflags? ConfigVarBuildtyped<string>
 ---@field lflags? ConfigVarBuildtyped<string>
----Order-only inputs
----@field cinputs? ConfigVarBuildtyped<string>
----@field linputs? ConfigVarBuildtyped<string>
----Order-only outputs
----@field coutputs? ConfigVarBuildtyped<string>
----@field loutputs? ConfigVarBuildtyped<string>
+---Inputs. `extra_inputs` are only supported at the buildtype level.
+---@field cinputs? { [integer]: ConfigVar<string>, [string]: { [integer]: ConfigVar<string>, extra_inputs?: ConfigVar<string>[] } }
+---@field linputs? { [integer]: ConfigVar<string>, [string]: { [integer]: ConfigVar<string>, extra_inputs?: ConfigVar<string>[] } }
+---Outputs. `extra_outputs` are only supported at the buildtype level.
+---@field coutputs? { [integer]: ConfigVar<string>, [string]: { [integer]: ConfigVar<string>, extra_outputs?: ConfigVar<string>[] } }
+---@field loutputs? { [integer]: ConfigVar<string>, [string]: { [integer]: ConfigVar<string>, extra_outputs?: ConfigVar<string>[] } }
 
 ---@class Config
 ---@field vars ConfigShape
@@ -164,20 +164,14 @@ end
 function CONFIG:render_for_buildtypes(...)
 	local fields = { ... }
 	local ret = table_clone(self.buildtypes)
-	for _, field_in in pairs(fields) do
+	for _, field in pairs(fields) do
 		for buildtype, rendered in pairs(ret) do
-			local field_out = field_in
-			if (field_in:sub(-7) == "outputs") then
-				rendered[field_in] = {}
-				rendered = rendered[field_in]
-				field_out = "extra_outputs"
-			elseif (field_in:sub(-6) == "inputs") then
-				rendered[field_in] = {}
-				rendered = rendered[field_in]
-				field_out = "extra_inputs"
+			rendered[field] = (rendered[field] or {})
+			TableExtend(rendered[field], self.vars[field])
+			TableExtend(rendered[field], (self.vars[field][buildtype] or {}))
+			for buildtype_inner, _ in pairs(ret) do
+				rendered[field][buildtype_inner] = nil
 			end
-			rendered[field_out] += self.vars[field_in]
-			rendered[field_out] += self.vars[field_in][buildtype]
 		end
 	end
 	return ret
