@@ -30,13 +30,12 @@ function cxx(configs, inputs)
 	end)
 end
 
----Compiles the given C++ modules and returns a shape for using them.
+---Compiles the given C++ module and returns a shape for using it.
 ---@param configs Config
+---@param module_fn string
 ---@return ConfigShape
-function cxxm(configs, inputs)
-	if (type(inputs) ~= "table") then
-		inputs = { inputs }
-	end
+function cxxm(configs, module_fn)
+	local module = tup.base(module_fn)
 	local module_cflags = { "/EHsc", "/std:c++latest" }
 
 	---@type ConfigShape
@@ -66,22 +65,17 @@ function cxxm(configs, inputs)
 	local ret = {
 		cflags = module_cflags,
 		cinputs = {},
-		linputs = cxx(configs:branch(module_compile), inputs),
+		linputs = cxx(configs:branch(module_compile), module_fn),
 	}
 	for buildtype, objs in pairs(ret.linputs) do
-		ret.cinputs[buildtype] = {}
-		for i, obj in ipairs(objs) do
-			local module = tup.base(inputs[i])
-			local ifc = obj:gsub(".obj$", ".ifc")
-			ret.cflags[buildtype] += string.format(
-				'/reference %s="%s"', module, ifc:gsub("/", "\\")
-			)
-			ret.cinputs[buildtype].extra_inputs += ifc
-			if (#module_compile.coutputs[buildtype].extra_outputs == 2) then
-				ret.cinputs[buildtype].extra_inputs += (
-					obj:gsub(".obj$", ".ifcast")
-				)
-			end
+		local obj = objs[1]
+		local ifc = obj:gsub(".obj$", ".ifc")
+		ret.cflags[buildtype] += string.format(
+			'/reference %s="%s"', module, ifc:gsub("/", "\\")
+		)
+		ret.cinputs[buildtype] = { extra_inputs = { ifc } }
+		if (#module_compile.coutputs[buildtype].extra_outputs == 2) then
+			ret.cinputs[buildtype].extra_inputs += obj:gsub(".obj$", ".ifcast")
 		end
 	end
 	return ret
