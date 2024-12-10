@@ -30,6 +30,8 @@ function cxx(configs, inputs)
 	end)
 end
 
+cc = cxx
+
 ---Compiles the given C++ module and returns a shape for using it.
 ---@param configs Config
 ---@param module_fn string
