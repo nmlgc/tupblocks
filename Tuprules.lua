@@ -66,7 +66,7 @@ end
 function flag_remove(flag)
 	return function(prev)
 		for i, prev_flag in ipairs(prev) do
-			if (prev_flag == flag) then
+			if string.match(prev_flag, flag) then
 				table.remove(prev, i)
 			end
 		end
