@@ -49,16 +49,23 @@ end
 ---@generic T
 ---@param func fun(value: T): boolean
 ---@param ... T[]
-function MatchesAny(func, ...)
+function First(func, ...)
 	local args = { ... }
 	for _, arg in ipairs(args) do
 		for _, value in ipairs(arg) do
 			if func(value) then
-				return true
+				return value
 			end
 		end
 	end
-	return false
+	return nil
+end
+
+---@generic T
+---@param func fun(value: T): boolean
+---@param ... T[]
+function MatchesAny(func, ...)
+	return (First(func, ...) ~= nil)
 end
 
 ---@param flag string
