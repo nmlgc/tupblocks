@@ -6,8 +6,12 @@ The missing layer between [Tup](https://gittup.org/tup) and your C/C++ compiler 
 My fourth attempt at writing such a layer, and finally almost not janky.
 Provides first-class support for [C++23 Standard Library Modules (P2465R3)](https://wg21.link/P2465R3).
 
-Currently only supporting Visual Studio compilers on Windows.
-*nix support will be added during [the porting process of 秋霜玉 / Shuusou Gyoku](https://github.com/nmlgc/ssg/issues/42).
+Currently supports:
+
+* **Visual Studio** on Windows
+
+* **GCC** and **Clang** on Linux.
+  C++23 Standard Library Modules unfortunately require `jq` as a build-time dependency because [SG15 thought that forcing a JSON parser upon build systems was a good idea](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2024/p3286r0.pdf).
 
 ## The idea
 
