@@ -24,34 +24,21 @@ CONFIG = CONFIG:branch({
 
 ---@param configs Config
 function cxx(configs, inputs)
-	local ret = {}
-	local buildtypes = configs:render_for_buildtypes(
-		"cflags", "cinputs", "coutputs", "suffix"
-	)
-	for buildtype, vars in pairs(buildtypes) do
-		vars.cinputs += inputs
-		vars.coutputs += (configs.vars.objdir .. "%B" .. vars.suffix .. ".obj")
+	return configs:CommonC(inputs, "%B", ".obj", function(vars)
+		local flags = ConcatFlags(vars.cflags)
 		vars.coutputs.extra_outputs += { "%O.pdb" }
-		objs = tup.foreach_rule(
-			vars.cinputs, (
-				"cl /nologo /c /Qpar /Zi /Fo:%o " ..
-
-				-- /Fd is a rather clunky way of overriding vc140.pdb, but we'd
-				-- really like to avoid that ghost node, which causes a second
-				-- unnecessary link pass if tup is launched immediately after a
-				-- successful build.
-				"/Fd:%O.pdb" ..
-
-				ConcatFlags(vars.cflags) .. " \"%f\""
-			), vars.coutputs
+		-- /Fd is a rather clunky way of overriding vc140.pdb, but we'd really
+		-- like to avoid that ghost node, which causes a second unnecessary
+		-- link pass if tup is launched immediately after a successful build.
+		local cmd = (
+			"cl /nologo /c /Qpar /Zi /Fo:%o /Fd:%O.pdb" .. flags .. " \"%f\""
 		)
-		ret[buildtype] += objs
-		for _, fn in pairs(objs) do
-			ret[buildtype]["extra_inputs"] += string.gsub(fn, ".obj$", ".pdb")
+		local ret = tup.foreach_rule(vars.cinputs, cmd, vars.coutputs)
+		for _, fn in ipairs(ret) do
+			ret.extra_inputs += string.gsub(fn, ".obj$", ".pdb")
 		end
-	end
-	setmetatable(ret, functional_metatable)
-	return ret
+		return ret
+	end)
 end
 
 ---Compiles the given C++ modules and returns a shape for using them.
@@ -140,48 +127,28 @@ end
 
 ---@param configs Config
 function dll(configs, inputs, name)
-	local ret = {}
-	local buildtypes = configs:render_for_buildtypes(
-		"lflags", "linputs", "loutputs", "suffix"
-	)
-	for buildtype, vars in pairs(buildtypes) do
-		local basename = (name .. vars.suffix)
+	return configs:CommonL(inputs, name, ".dll", function(vars, basename)
 		local lib = (configs.vars.objdir .. basename .. ".lib")
-		local dll = (configs.vars.bindir .. basename .. ".dll")
-		vars.loutputs += dll
 		vars.loutputs.extra_outputs += { "%O.pdb", lib }
-		tup.rule(
-			TableExtend(vars.linputs, inputs[buildtype]), (
-				"link /nologo /DEBUG:FULL /DLL /NOEXP /IMPLIB:" .. lib ..
-				ConcatFlags(vars.lflags) .. " /MANIFEST:EMBED " ..
-				'/PDBALTPATH:"' .. basename .. '".pdb /out:"%o" %f'
-			),
-			vars.loutputs
+		local cmd = (
+			"link /nologo /DEBUG:FULL /DLL /NOEXP /IMPLIB:" .. lib ..
+			ConcatFlags(vars.lflags) .. " /MANIFEST:EMBED " ..
+			'/PDBALTPATH:"' .. basename .. '".pdb /out:"%o" %f'
 		)
-		ret[buildtype] += lib
-	end
-	setmetatable(ret, functional_metatable)
-	return ret
+		tup.rule(vars.linputs, cmd, vars.loutputs)
+		return lib
+	end)
 end
 
 ---@param configs Config
-function exe(configs, inputs, exe_basename)
-	ret = {}
-	local buildtypes = configs:render_for_buildtypes(
-		"lflags", "linputs", "loutputs", "suffix"
-	)
-	for buildtype, vars in pairs(buildtypes) do
-		basename = (exe_basename .. vars.suffix)
-		vars.loutputs += (configs.vars.bindir .. "/" .. basename .. ".exe")
+function exe(configs, inputs, name)
+	return configs:CommonL(inputs, name, ".exe", function(vars, basename)
 		vars.loutputs.extra_outputs += { "%O.pdb" }
-		ret[buildtype] += tup.rule(
-			TableExtend(vars.linputs, inputs[buildtype]), (
-				"link /nologo /DEBUG:FULL" ..
-				ConcatFlags(vars.lflags) .. " /MANIFEST:EMBED " ..
-				'/PDBALTPATH:"' .. basename .. '.pdb" /out:"%o" %f'
-			),
-			vars.loutputs
+		local cmd = (
+			"link /nologo /DEBUG:FULL" ..
+			ConcatFlags(vars.lflags) .. " /MANIFEST:EMBED " ..
+			'/PDBALTPATH:"' .. basename .. '.pdb" /out:"%o" %f'
 		)
-	end
-	return ret
+		return tup.rule(vars.linputs, cmd, vars.loutputs)
+	end)
 end

@@ -168,6 +168,41 @@ function CONFIG:render_for_buildtypes(...)
 	return ret
 end
 
+---@param name string
+---@param ext string
+---@param rule fun(vars: table): table Runs the build rule and returns inputs for further rules.
+function CONFIG:CommonC(inputs, name, ext, rule)
+	local ret = {}
+	local buildtypes = self:render_for_buildtypes(
+		"cflags", "cinputs", "coutputs", "suffix"
+	)
+	for buildtype, vars in pairs(buildtypes) do
+		vars.cinputs += inputs
+		vars.coutputs += (self.vars.objdir .. name .. vars.suffix .. ext)
+		ret[buildtype] = rule(vars)
+	end
+	setmetatable(ret, functional_metatable)
+	return ret
+end
+
+---@param name string
+---@param ext string
+---@param rule fun(vars: table, basename: string): table Runs the build rule and returns inputs for further rules.
+function CONFIG:CommonL(inputs, name, ext, rule)
+	local ret = {}
+	local buildtypes = self:render_for_buildtypes(
+		"lflags", "linputs", "loutputs", "suffix"
+	)
+	for buildtype, vars in pairs(buildtypes) do
+		local basename = (name .. vars.suffix)
+		TableExtend(vars.linputs, inputs[buildtype])
+		vars.loutputs += (self.vars.bindir .. basename .. ext)
+		ret[buildtype] = rule(vars, basename)
+	end
+	setmetatable(ret, functional_metatable)
+	return ret
+end
+
 function table_merge(t1, t2)
 	return setmetatable(TableExtend(table_clone(t1), t2), getmetatable(t1))
 end
