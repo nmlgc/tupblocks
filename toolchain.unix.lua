@@ -2,7 +2,8 @@
 
 CONFIG = CONFIG:branch({
 	cflags = {
-		debug = { "-O0", "-g", },
+		"-g",
+		debug = { "-O0" },
 		release = { "-O3", "-DNDEBUG" },
 	},
 })
