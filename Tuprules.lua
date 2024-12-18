@@ -177,7 +177,7 @@ function CONFIG:CommonC(inputs, name, ext, rule)
 		"cflags", "cinputs", "coutputs", "suffix"
 	)
 	for buildtype, vars in pairs(buildtypes) do
-		vars.cinputs += inputs
+		TableExtend(vars.cinputs, inputs)
 		vars.coutputs += (self.vars.objdir .. name .. vars.suffix .. ext)
 		ret[buildtype] = rule(vars)
 	end
