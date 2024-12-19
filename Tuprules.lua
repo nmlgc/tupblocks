@@ -223,6 +223,30 @@ function CONFIG:CommonL(inputs, name, ext, rule)
 	return ret
 end
 
+---Turn cflags and lflags from environment variables into a
+---[ConfigShape](lua://ConfigShape). Useful for importing flags from pkg-config
+---without embedding the query command line into every build rule. You can pass
+---multiple prefixes to be included in the single returned shape, but this
+---function returns `nil` if even just one of the environment variables is
+---missing.
+---@param ... string Environment variable prefixes
+function EnvConfig(...)
+	---@type ConfigShape
+	local ret = { cflags = {}, lflags = {} }
+	for _, prefix in pairs({ ... }) do
+		local var_c = (prefix .. "_cflags")
+		local var_l = (prefix .. "_lflags")
+		tup.import(var_c)
+		tup.import(var_l)
+		if ((_G[var_c] == nil) or (_G[var_l] == nil)) then
+			return nil
+		end
+		ret.cflags += _G[var_c]
+		ret.lflags += _G[var_l]
+	end
+	return ret
+end
+
 function table_merge(t1, t2)
 	return setmetatable(TableExtend(table_clone(t1), t2), getmetatable(t1))
 end
