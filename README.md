@@ -147,3 +147,46 @@ project_obj = (
 
 exe(project_cfg, (project_obj + the_lib_dll), "project")
 ```
+
+### Interacting with pkg-config
+
+Tup supports command substitution in rules, but this is a bad fit for pkg-config for two reasons:
+
+1. pkg-config would run once per rule
+2. Since the Lua script runs before any rule is executed, Tupfiles can't make decisions based on command output. But doing so would be required to e.g. fall back from system libraries to vendored ones.
+
+Therefore, it makes more sense to run pkg-config in a shell script surrounding the Tupfile.
+The `pkg_config_env.sh` helper script provides a function that redirects the pkg-config output into environment variables that can later be used with the `EnvConfig()` Lua function:
+
+`build.sh`:
+
+```sh
+#!/bin/sh
+. ./vendor/tupblocks/pkg_config_env.sh
+pkg_config_env_optional zlib
+pkg_config_env_required sdl2
+tup
+```
+
+`Tupfile.lua`:
+
+```lua
+-- A function to build a locally vendored zlib in case we can't link to a
+-- system-wide installation.
+function BuildZLib(base_cfg)
+	local ZLIB = sourcepath("vendor/zlib/")
+
+	---@class ConfigShape
+	local link = { cflags = ("-I" .. ZLIB.root) }
+	local cfg = base_cfg:branch(link)
+	link.linputs = cc(cfg, ZLIB.glob("*.c"))
+	return link
+end
+
+-- Try to create a ConfigShape that represents the system-wide zlib, and fall
+-- back onto the vendored one if pkg-config couldn't find it.
+local ZLIB_LINK = (EnvConfig("zlib") or BuildZLib(CONFIG))
+
+-- SDL 2 must be installed via pkg-config.
+local SDL2_LINK = EnvConfig("sdl2")
+```
