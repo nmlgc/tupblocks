@@ -190,3 +190,7 @@ local ZLIB_LINK = (EnvConfig("zlib") or BuildZLib(CONFIG))
 -- SDL 2 must be installed via pkg-config.
 local SDL2_LINK = EnvConfig("sdl2")
 ```
+
+### Customizing flags from outside the script
+
+The `CONFIG.cflags` and `CONFIG.lflags` tables start out with the contents of the `CFLAGS` and `LFLAGS` environment variables, respectively.

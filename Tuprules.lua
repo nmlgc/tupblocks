@@ -17,6 +17,19 @@
 ---@field coutputs? { [integer]: ConfigVar<string>, [string]: { [integer]: ConfigVar<string>, extra_outputs?: ConfigVar<string>[] } }
 ---@field loutputs? { [integer]: ConfigVar<string>, [string]: { [integer]: ConfigVar<string>, extra_outputs?: ConfigVar<string>[] } }
 
+local function info(str)
+	print(string.char(27) .. '[0;34m' .. str .. string.char(27) .. '[0m')
+end
+
+tup.import("CFLAGS")
+tup.import("LFLAGS")
+if (CFLAGS ~= nil) then
+	info("ℹ️ Using initial CFLAGS from environment: `" .. CFLAGS .. "`")
+end
+if (LFLAGS ~= nil) then
+	info("ℹ️ Using initial LFLAGS from environment: `" .. LFLAGS .. "`")
+end
+
 ---@class Config
 ---@field vars ConfigShape
 CONFIG = {
@@ -24,8 +37,8 @@ CONFIG = {
 		objdir = "obj/",
 		bindir = "bin/",
 		suffix = { debug = "d" },
-		cflags = {},
-		lflags = {},
+		cflags = CFLAGS,
+		lflags = LFLAGS,
 		cinputs = {},
 		linputs = {},
 		coutputs = {},
