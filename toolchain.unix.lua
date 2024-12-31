@@ -1,5 +1,8 @@
 --- Common rule definitions for compilers with Unix-like frontends
 
+-- Controls the path `-print-file-name` returns for the module JSON file.
+tup.export("COMPILER_PATH")
+
 CONFIG = CONFIG:branch({
 	cflags = {
 		"-g",
