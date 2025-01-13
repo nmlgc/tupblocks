@@ -83,7 +83,9 @@ THE_LIB_COMPILE = {
 		-- should be its own element, and can consist of multiple
 		-- space-separated words. This allows redundant flags to be
 		-- deduplicated when building the final command lines.
-		debug = { "/DDEBUG", "/DDEBUG_VERBOSE" },
+		-- Since both MSVC and GCC-like compilers support the dash syntax, it
+		-- makes sense to use it for cross-platform settings.
+		debug = { "-DDEBUG", "-DDEBUG_VERBOSE" },
 
 		-- The base CONFIG table uses the /GL flag for Visual Studio release
 		-- builds by default, but this library doesn't like it. Merged settings
@@ -130,7 +132,7 @@ local modules_cfg = cxx_std_modules(CONFIG)
 -- Since we don't need our flags anywhere else, we just inline the table.
 project_cfg = CONFIG:branch(modules_cfg, THE_LIB_LINK, {
 	cflags = {
-		("/I" .. PROJECT.root),
+		("-I" .. PROJECT.root),
 		"/source-charset:utf-8",
 		"/execution-charset:utf-8",
 	},
