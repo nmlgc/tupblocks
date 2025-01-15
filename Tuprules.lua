@@ -260,6 +260,36 @@ function EnvConfig(...)
 	return ret
 end
 
+---Creates a C header file with macros `#define`d according to the given table.
+---`false` values are turned into `#undef`. Returns `fn`.
+---@param fn string Output file name
+---@param tbl { [string]: string | false } Macros and their values
+function Header(fn, tbl)
+	local quote = ""
+	if (tup.getconfig("TUP_PLATFORM") ~= "win32") then
+		quote = "'"
+	end
+
+	local cmd = ""
+	for macro, val in pairs(tbl) do
+		if (#cmd == 0) then
+			cmd = ("(echo " .. quote)
+		else
+			cmd = (cmd .. quote .. "&& echo " .. quote)
+		end
+
+		if (val == false) then
+			cmd = string.format('%s#undef %s', cmd, macro)
+		else
+			val = val:gsub("\\", "\\\\")
+			cmd = string.format('%s#define %s "%s"', cmd, macro, val)
+		end
+	end
+	cmd = (cmd .. quote .. ")")
+	tup.rule({}, (cmd .. '>"%o"'), fn)
+	return fn
+end
+
 function table_merge(t1, t2)
 	return setmetatable(TableExtend(table_clone(t1), t2), getmetatable(t1))
 end

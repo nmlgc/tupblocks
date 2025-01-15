@@ -130,7 +130,7 @@ PROJECT = sourcepath("src_of_project/")
 local modules_cfg = cxx_std_modules(CONFIG)
 
 -- Since we don't need our flags anywhere else, we just inline the table.
-project_cfg = CONFIG:branch(modules_cfg, THE_LIB_LINK, {
+project_cfg = CONFIG:branch(modules_cfg, config_h, THE_LIB_LINK, {
 	cflags = {
 		("-I" .. PROJECT.root),
 		"/source-charset:utf-8",
@@ -140,6 +140,13 @@ project_cfg = CONFIG:branch(modules_cfg, THE_LIB_LINK, {
 })
 
 project_src += PROJECT.glob("*.cpp")
+
+-- Turn the `USERNAME` environment variable into a C macro named `BUILDER` and
+-- write its value to a header file.
+tup.import("USERNAME")
+project_src.extra_inputs += Header("obj/config.h", {
+	BUILDER = (USERNAME .. ""),
+})
 
 -- Right now, rule function outputs must be merged using `+`, not `+=`.
 project_obj = (
