@@ -290,6 +290,23 @@ function Header(fn, tbl)
 	return fn
 end
 
+---Creates a C header file with macros `#define`d according to the given
+---environment variables. Returns `fn`.
+---@param fn string Output file name
+---@param vars string[] Environment variables
+function EnvHeader(fn, vars)
+	local tbl = {}
+	for _, var in pairs(vars) do
+		tup.import(var)
+		if (_G[var] == nil) then
+			tbl[var] = false
+		else
+			tbl[var] = (_G[var] .. "")
+		end
+	end
+	return Header(fn, tbl)
+end
+
 function table_merge(t1, t2)
 	return setmetatable(TableExtend(table_clone(t1), t2), getmetatable(t1))
 end

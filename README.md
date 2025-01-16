@@ -142,11 +142,14 @@ project_cfg = CONFIG:branch(modules_cfg, config_h, THE_LIB_LINK, {
 project_src += PROJECT.glob("*.cpp")
 
 -- Turn the `USERNAME` environment variable into a C macro named `BUILDER` and
--- write its value to a header file.
+-- write its value to a header file. If the environment variable and macro name
+-- were identical, you can use EnvHeader() as a shorthand that doesn't require
+-- tup.import().
 tup.import("USERNAME")
 project_src.extra_inputs += Header("obj/config.h", {
 	BUILDER = (USERNAME .. ""),
 })
+-- project_src.extra_inputs += EnvHeader("obj/config.h", { BUILDER })
 
 -- Right now, rule function outputs must be merged using `+`, not `+=`.
 project_obj = (
