@@ -188,7 +188,7 @@ tup
 function BuildZLib(base_cfg)
 	local ZLIB = sourcepath("vendor/zlib/")
 
-	---@class ConfigShape
+	---@type ConfigShape
 	local link = { cflags = ("-I" .. ZLIB.root) }
 	local cfg = base_cfg:branch(link)
 	link.linputs = cc(cfg, ZLIB.glob("*.c"))
