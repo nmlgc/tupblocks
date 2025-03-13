@@ -6,6 +6,7 @@ CONFIG = CONFIG:branch({
 		release = { "/MT", "/O2", "/GL", "/DNDEBUG" },
 	},
 	lflags = {
+		"/MANIFEST:EMBED",
 		release = { "/OPT:REF", "/OPT:ICF", "/LTCG" },
 	},
 	loutputs = { debug = { extra_outputs = { "%O.ilk" } } },
@@ -110,8 +111,8 @@ function CONFIG:dll(inputs, name)
 		local lib = (self.vars.objdir .. basename .. ".lib")
 		vars.loutputs.extra_outputs += { "%O.pdb", lib }
 		local cmd = (
-			"link /nologo /DEBUG:FULL /DLL /NOEXP /IMPLIB:" .. lib ..
-			ConcatFlags(vars.lflags) .. " /MANIFEST:EMBED " ..
+			'link /nologo /DEBUG:FULL /DLL /NOEXP /IMPLIB:"' .. lib .. '"' ..
+			ConcatFlags(vars.lflags) .. " " ..
 			'/PDBALTPATH:"' .. basename .. '".pdb /out:"%o"' .. inps
 		)
 		tup.rule(vars.linputs, cmd, vars.loutputs)
@@ -124,7 +125,7 @@ function CONFIG:exe(inputs, name)
 		vars.loutputs.extra_outputs += { "%O.pdb" }
 		local cmd = (
 			"link /nologo /DEBUG:FULL" ..
-			ConcatFlags(vars.lflags) .. " /MANIFEST:EMBED " ..
+			ConcatFlags(vars.lflags) .. " " ..
 			'/PDBALTPATH:"' .. basename .. '.pdb" /out:"%o"' .. inps
 		)
 		return tup.rule(vars.linputs, cmd, vars.loutputs)
