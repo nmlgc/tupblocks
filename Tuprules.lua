@@ -270,14 +270,23 @@ function Header(fn, tbl)
 		quote = "'"
 	end
 
+	-- Sort the incoming keys, so that we output them in a deterministic order
+	---@type string[]
+	local macros = {}
+	for macro in pairs(tbl) do
+		table.insert(macros, macro)
+	end
+	table.sort(macros)
+
 	local cmd = ""
-	for macro, val in pairs(tbl) do
+	for _, macro in pairs(macros) do
 		if (#cmd == 0) then
 			cmd = ("(echo " .. quote)
 		else
 			cmd = (cmd .. quote .. "&& echo " .. quote)
 		end
 
+		local val = tbl[macro]
 		if (val == false) then
 			cmd = string.format('%s#undef %s', cmd, macro)
 		else
