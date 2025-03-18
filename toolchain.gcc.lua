@@ -10,12 +10,11 @@ CONFIG = CONFIG:branch({
 	-- lflags = { release = { "-flto" } },
 })
 
----@param configs Config
 ---@param module_fn {} | string
 ---@param module string
 ---@param substituted boolean
 ---@return ConfigShape
-function CXXMWithOutput(configs, module_fn, module, substituted)
+function CONFIG:CXXMWithOutput(module_fn, module, substituted)
 	---@type ConfigShape
 	local consume = {
 		cflags = { "-std=c++2c", "-fmodules-ts" },
@@ -26,9 +25,9 @@ function CXXMWithOutput(configs, module_fn, module, substituted)
 	---@type ConfigShape
 	local compile = { coutputs = {} }
 
-	local buildtypes = configs:render_for_buildtypes("cflags", "suffix")
+	local buildtypes = self:render_for_buildtypes("cflags", "suffix")
 	for buildtype, vars in pairs(buildtypes) do
-		local module_basename = (configs.vars.objdir .. module .. vars.suffix)
+		local module_basename = (self.vars.objdir .. module .. vars.suffix)
 		local gcm_fn = (module_basename .. ".gcm")
 		local map_fn = (module_basename .. ".modulemap")
 		local cmd = string.format('echo %s "%s"', module, gcm_fn)
@@ -49,15 +48,15 @@ function CXXMWithOutput(configs, module_fn, module, substituted)
 		compile.coutputs[buildtype] = { extra_outputs = { gcm_fn } }
 	end
 
-	local gcm_cfg = configs:branch(consume, compile)
+	local gcm_cfg = self:branch(consume, compile)
 	local input = module_fn
 	if substituted then
 		input = {}
 		gcm_cfg = gcm_cfg:branch({ cflags = module_fn })
 	end
 
-	consume.linputs = UnixC(CXX, gcm_cfg, input, module, ".o")
-	for buildtype, _ in pairs(configs.buildtypes) do
+	consume.linputs = gcm_cfg:UnixC(CXX, input, module, ".o")
+	for buildtype, _ in pairs(self.buildtypes) do
 		consume.cinputs[buildtype] = {
 			extra_inputs = compile.coutputs[buildtype].extra_outputs
 		}

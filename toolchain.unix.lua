@@ -12,11 +12,10 @@ CONFIG = CONFIG:branch({
 })
 
 ---@param compiler string
----@param configs Config
 ---@param out_basename string
 ---@param ext string
-function UnixC(compiler, configs, inputs, out_basename, ext)
-	return configs:CommonC(inputs, out_basename, ext, function(vars)
+function CONFIG:UnixC(compiler, inputs, out_basename, ext)
+	return self:CommonC(inputs, out_basename, ext, function(vars)
 		local cmd = (compiler .. ' -c -o "%o"' .. ConcatFlags(vars.cflags))
 
 		-- If we have no array part, we assume the inputs to be part of
@@ -28,14 +27,12 @@ function UnixC(compiler, configs, inputs, out_basename, ext)
 	end)
 end
 
----@param configs Config
-function cc(configs, inputs)
-	return UnixC(CC, configs, inputs, "%B", ".o")
+function CONFIG:cc(inputs)
+	return self:UnixC(CC, inputs, "%B", ".o")
 end
 
----@param configs Config
-function cxx(configs, inputs)
-	return UnixC(CXX, configs, inputs, "%B", ".o")
+function CONFIG:cxx(inputs)
+	return self:UnixC(CXX, inputs, "%B", ".o")
 end
 
 local function std_module_fn(module)
@@ -54,27 +51,24 @@ local function std_module_fn(module)
 end
 
 -- Compiles the C++ standard library modules and returns a shape for using them.
----@param configs Config
 ---@return ConfigShape
-function cxx_std_modules(configs)
-	local std = CXXMWithOutput(configs, std_module_fn("std"), "std", true)
-	local compat = CXXMWithOutput(
-		configs:branch(std), std_module_fn("std.compat"), "std.compat", true
+function CONFIG:cxx_std_modules()
+	local std = self:CXXMWithOutput(std_module_fn("std"), "std", true)
+	local compat = self:branch(std):CXXMWithOutput(
+		std_module_fn("std.compat"), "std.compat", true
 	)
 	return TableExtend(std, compat)
 end
 
 ---Compiles the given C++ module and returns a shape for using it.
----@param configs Config
 ---@param module_fn string
 ---@return ConfigShape
-function cxxm(configs, module_fn)
-	return CXXMWithOutput(configs, module_fn, tup.base(module_fn), false)
+function CONFIG:cxxm(module_fn)
+	return self:CXXMWithOutput(module_fn, tup.base(module_fn), false)
 end
 
----@param configs Config
-function exe(configs, inputs, name)
-	return configs:CommonL(inputs, name, "", function(vars, _, inps)
+function CONFIG:exe(inputs, name)
+	return self:CommonL(inputs, name, "", function(vars, _, inps)
 		-- Inputs must come first to work properly with `-Wl,--as-needed`.
 		local cmd = (CXX .. inps .. ' -o "%o"' .. ConcatFlags(vars.lflags))
 		return tup.rule(vars.linputs, cmd, vars.loutputs)

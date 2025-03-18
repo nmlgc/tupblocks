@@ -116,8 +116,8 @@ the_lib_src += (THE_LIB.glob("src/*.c") - { "linux_exclusive.c$" })
 
 -- Compile and link the library into a DLL. The rule functions return a table
 -- that represents the outputs of this build step as inputs for further steps.
-the_lib_obj = cxx(the_lib_cfg, the_lib_src)
-the_lib_dll = dll(the_lib_cfg, the_lib_obj, "the_lib")
+the_lib_obj = the_lib_cfg:cxx(the_lib_src)
+the_lib_dll = the_lib_cfg:dll(the_lib_obj, "the_lib")
 -- -----------------------------
 
 -- Define the project itself.
@@ -127,7 +127,7 @@ PROJECT = sourcepath("src_of_project/")
 -- `std` module with the basic settings and store the compilation flags
 -- necessary to use it. This automatically enables support for the latest C++
 -- language standard version.
-local modules_cfg = cxx_std_modules(CONFIG)
+local modules_cfg = CONFIG:cxx_std_modules()
 
 -- Since we don't need our flags anywhere else, we just inline the table.
 project_cfg = CONFIG:branch(modules_cfg, config_h, THE_LIB_LINK, {
@@ -153,11 +153,11 @@ project_src.extra_inputs += Header("obj/config.h", {
 
 -- Right now, rule function outputs must be merged using `+`, not `+=`.
 project_obj = (
-	cxx(project_cfg, project_src) +
-	rc(project_cfg, PROJECT.join("windows_resource.rc"))
+	project_cfg:cxx(project_src) +
+	project_cfg:rc(PROJECT.join("windows_resource.rc"))
 )
 
-exe(project_cfg, (project_obj + the_lib_dll), "project")
+project_cfg:exe((project_obj + the_lib_dll), "project")
 ```
 
 ### Interacting with pkg-config
@@ -191,7 +191,7 @@ function BuildZLib(base_cfg)
 	---@type ConfigShape
 	local link = { cflags = ("-I" .. ZLIB.root) }
 	local cfg = base_cfg:branch(link)
-	link.linputs = cc(cfg, ZLIB.glob("*.c"))
+	link.linputs = cfg:cc(ZLIB.glob("*.c"))
 	return link
 end
 

@@ -10,14 +10,13 @@ CONFIG = CONFIG:branch({
 	lflags = { release = { "-flto=full" } },
 })
 
----@param configs Config
 ---@param module_fn {} | string
 ---@param module string
 ---@param substituted boolean
 ---@return ConfigShape
-function CXXMWithOutput(configs, module_fn, module, substituted)
+function CONFIG:CXXMWithOutput(module_fn, module, substituted)
 	local cpp2c = "-std=c++2c"
-	local compile = configs:branch({
+	local compile = self:branch({
 		cflags = { "-Wno-reserved-module-identifier", cpp2c }
 	})
 
@@ -32,7 +31,7 @@ function CXXMWithOutput(configs, module_fn, module, substituted)
 		input = {}
 		pcm_cfg = pcm_cfg:branch({ cflags = module_fn })
 	end
-	local module_pcm = UnixC(CXX, pcm_cfg, input, module, ".pcm")
+	local module_pcm = pcm_cfg:UnixC(CXX, input, module, ".pcm")
 
 	local o_cfg = compile:branch({ cinputs = module_pcm })
 
@@ -40,7 +39,7 @@ function CXXMWithOutput(configs, module_fn, module, substituted)
 	local ret = {
 		cflags = { cpp2c },
 		cinputs = {},
-		linputs = UnixC(CC, o_cfg, {}, module, ".o"),
+		linputs = o_cfg:UnixC(CC, {}, module, ".o"),
 	}
 	for buildtype, pcm in pairs(module_pcm) do
 		ret.cflags[buildtype] += string.format(

@@ -11,9 +11,8 @@ CONFIG = CONFIG:branch({
 	loutputs = { debug = { extra_outputs = { "%O.ilk" } } },
 })
 
----@param configs Config
-function cxx(configs, inputs)
-	return configs:CommonC(inputs, "%B", ".obj", function(vars)
+function CONFIG:cxx(inputs)
+	return self:CommonC(inputs, "%B", ".obj", function(vars)
 		local flags = ConcatFlags(vars.cflags)
 		vars.coutputs.extra_outputs += { "%O.pdb" }
 		-- /Fd is a rather clunky way of overriding vc140.pdb, but we'd really
@@ -30,13 +29,12 @@ function cxx(configs, inputs)
 	end)
 end
 
-cc = cxx
+CONFIG.cc = CONFIG.cxx
 
 ---Compiles the given C++ module and returns a shape for using it.
----@param configs Config
 ---@param module_fn string
 ---@return ConfigShape
-function cxxm(configs, module_fn)
+function CONFIG:cxxm(module_fn)
 	local module = tup.base(module_fn)
 	local module_cflags = { "/EHsc", "/std:c++latest" }
 
@@ -54,7 +52,7 @@ function cxxm(configs, module_fn)
 		return (flag:match("/analyze") ~= nil)
 	end
 
-	local buildtypes = configs:render_for_buildtypes("cflags")
+	local buildtypes = self:render_for_buildtypes("cflags")
 	for buildtype, vars in pairs(buildtypes) do
 		-- `extra_outputs` are only supported at the buildtype level.
 		module_compile.coutputs[buildtype] = { extra_outputs = { "%O.ifc" } }
@@ -67,7 +65,7 @@ function cxxm(configs, module_fn)
 	local ret = {
 		cflags = module_cflags,
 		cinputs = {},
-		linputs = cxx(configs:branch(module_compile), module_fn),
+		linputs = self:branch(module_compile):cxx(module_fn),
 	}
 	for buildtype, objs in pairs(ret.linputs) do
 		local obj = objs[1]
@@ -84,35 +82,32 @@ function cxxm(configs, module_fn)
 end
 
 -- Compiles the C++ standard library modules and returns a shape for using them.
----@param configs Config
 ---@return ConfigShape
-function cxx_std_modules(configs)
+function CONFIG:cxx_std_modules()
 	tup.import("VCToolsInstallDir")
 
 	-- tup turns `VCToolsInstallDir` into a table if it contains a space, but
 	-- concatenating a string turns it back into a string?!
 	local dir = (VCToolsInstallDir .. "\\modules"):gsub("\\", "/")
-	local std = cxxm(configs, (dir .. "/std.ixx"))
-	local compat = cxxm(configs:branch(std), (dir .. "/std.compat.ixx"))
+	local std = self:cxxm(dir .. "/std.ixx")
+	local compat = self:branch(std):cxxm(dir .. "/std.compat.ixx")
 	return TableExtend(std, compat)
 end
 
----@param configs Config
-function rc(configs, inputs)
+function CONFIG:rc(inputs)
 	local ret = {}
-	outputs = { (configs.vars.objdir .. "%B.res") }
+	outputs = { (self.vars.objdir .. "%B.res") }
 	objs = tup.foreach_rule(inputs, "rc /nologo /n /fo %o %f", outputs)
-	for buildtype, vars in pairs(configs.buildtypes) do
+	for buildtype, vars in pairs(self.buildtypes) do
 		ret[buildtype] += objs
 	end
 	setmetatable(ret, functional_metatable)
 	return ret
 end
 
----@param configs Config
-function dll(configs, inputs, name)
-	return configs:CommonL(inputs, name, ".dll", function(vars, basename, inps)
-		local lib = (configs.vars.objdir .. basename .. ".lib")
+function CONFIG:dll(inputs, name)
+	return self:CommonL(inputs, name, ".dll", function(vars, basename, inps)
+		local lib = (self.vars.objdir .. basename .. ".lib")
 		vars.loutputs.extra_outputs += { "%O.pdb", lib }
 		local cmd = (
 			"link /nologo /DEBUG:FULL /DLL /NOEXP /IMPLIB:" .. lib ..
@@ -124,9 +119,8 @@ function dll(configs, inputs, name)
 	end)
 end
 
----@param configs Config
-function exe(configs, inputs, name)
-	return configs:CommonL(inputs, name, ".exe", function(vars, basename, inps)
+function CONFIG:exe(inputs, name)
+	return self:CommonL(inputs, name, ".exe", function(vars, basename, inps)
 		vars.loutputs.extra_outputs += { "%O.pdb" }
 		local cmd = (
 			"link /nologo /DEBUG:FULL" ..
