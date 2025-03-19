@@ -74,3 +74,7 @@ function CONFIG:exe(inputs, name)
 		return tup.rule(vars.linputs, cmd, vars.loutputs)
 	end)
 end
+
+function CONFIG:lib(inputs, _)
+	return inputs
+end

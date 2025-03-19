@@ -130,3 +130,25 @@ function CONFIG:exe(inputs, name)
 		return tup.rule(vars.linputs, cmd, vars.loutputs)
 	end)
 end
+
+---@param name string
+function CONFIG:lib(inputs, name)
+	local ret = {}
+	local buildtypes = self:render_for_buildtypes("suffix")
+	for buildtype, vars in pairs(buildtypes) do
+		local lib_fn = (self.vars.objdir .. name .. vars.suffix .. ".lib")
+		local cmd = 'lib /nologo /out:"%o"'
+		for _, input in ipairs(inputs[buildtype]) do
+			cmd = string.format('%s "%s"', cmd, input)
+		end
+
+		-- Any extra_inputs must be passed through to the linker called after
+		-- us, and tup.rule() resets the incoming table value to `nil`.
+		local extra_inputs = inputs[buildtype].extra_inputs
+
+		ret[buildtype] += tup.rule(inputs[buildtype], cmd, lib_fn)
+		ret[buildtype].extra_inputs = extra_inputs
+	end
+	setmetatable(ret, functional_metatable)
+	return ret
+end
