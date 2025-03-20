@@ -320,19 +320,30 @@ function table_merge(t1, t2)
 	return setmetatable(TableExtend(table_clone(t1), t2), getmetatable(t1))
 end
 
--- https://stackoverflow.com/a/49709999
-function table_filter(tbl, patterns)
+---Removes all elements matching any of the given patterns from `mut_tbl`
+---in-place, and returns the removed elements as a separate table.
+---@param mut_tbl table
+---@param patterns { any: string | number }
+function TableDrain(mut_tbl, patterns)
+	local drained = {}
 	for _, pattern in pairs(patterns) do
 		local new_index = 1
-		local size_orig = #tbl
-		for old_index, v in ipairs(tbl) do
+		local size_orig = #mut_tbl
+		for _, v in ipairs(mut_tbl) do
 			if not string.match(v, pattern) then
-				tbl[new_index] = v
+				mut_tbl[new_index] = v
 				new_index = new_index + 1
+			else
+				drained += v
 			end
 		end
-		for i = new_index, size_orig do tbl[i] = nil end
+		for i = new_index, size_orig do mut_tbl[i] = nil end
 	end
+	return drained
+end
+
+function table_filter(tbl, patterns)
+	TableDrain(tbl, patterns)
 	return tbl
 end
 
