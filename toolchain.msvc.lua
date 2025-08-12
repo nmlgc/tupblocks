@@ -19,9 +19,7 @@ function CONFIG:cxx(inputs)
 		-- /Fd is a rather clunky way of overriding vc140.pdb, but we'd really
 		-- like to avoid that ghost node, which causes a second unnecessary
 		-- link pass if tup is launched immediately after a successful build.
-		local cmd = (
-			'cl /nologo /c /Qpar /Zi /Fo:"%o" /Fd:"%O.pdb"' .. flags .. ' "%f"'
-		)
+		local cmd = ('^j^ cl /nologo /c /Qpar /Zi /Fo:"%o" /Fd:"%O.pdb"' .. flags .. ' "%f"')
 		local ret = tup.foreach_rule(vars.cinputs, cmd, vars.coutputs)
 		for _, fn in ipairs(ret) do
 			ret.extra_inputs += string.gsub(fn, ".obj$", ".pdb")
