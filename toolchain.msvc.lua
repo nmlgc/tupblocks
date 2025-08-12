@@ -20,7 +20,9 @@ function CONFIG:cxx(inputs)
 		-- like to avoid that ghost node, which causes a second unnecessary
 		-- link pass if tup is launched immediately after a successful build.
 		local cmd = (
-			'cl /nologo /c /Qpar /Zi /Fo:"%o" /Fd:"%O.pdb"' .. flags .. ' "%f"'
+			'^j^ cl /nologo /c /Qpar /Zi /Fo:"%o" /Fd:"%O.pdb"' ..
+			flags ..
+			' "%f"'
 		)
 		local ret = tup.foreach_rule(vars.cinputs, cmd, vars.coutputs)
 		for _, fn in ipairs(ret) do

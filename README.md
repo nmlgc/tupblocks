@@ -206,3 +206,10 @@ local SDL2_LINK = EnvConfig("sdl2")
 ### Customizing flags from outside the script
 
 The `CONFIG.cflags` and `CONFIG.lflags` tables start out with the contents of the `CFLAGS` and `LFLAGS` environment variables, respectively.
+
+## `compile_commands.json` generation (experimental)
+
+`tup compiledb` works, and the generated file includes all C/C++ translation units.
+However, both Tup's implementation only really supports the simplest single-buildtype use case: It produces LSP-confusing output for even our default configuration of Debug and Release buildtypes, and completely breaks once C/C++ translation units require order-only inputs. It might work fine for simple projects though.
+
+More detail in [this comment](https://github.com/nmlgc/tupblocks/pull/1#issuecomment-3187746493).

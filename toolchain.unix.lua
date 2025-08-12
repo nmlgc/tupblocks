@@ -16,7 +16,9 @@ CONFIG = CONFIG:branch({
 ---@param ext string
 function CONFIG:UnixC(compiler, inputs, out_basename, ext)
 	return self:CommonC(inputs, out_basename, ext, function(vars)
-		local cmd = (compiler .. ' -c -o "%o"' .. ConcatFlags(vars.cflags))
+		local cmd = (
+			'^j^ ' .. compiler .. ' -c -o "%o"' .. ConcatFlags(vars.cflags)
+		)
 
 		-- If we have no array part, we assume the inputs to be part of
 		-- `vars.cflags`. Required for substituted input file names.
