@@ -1,7 +1,5 @@
 # Opinionated building blocks for the Tup build system
 
-[![Code Nutrition: O+ S++ I C E- !PS](http://code.grevit.net:8084/badge/O%2B_S%2B%2B_I_C_E-___!PS)](http://code.grevit.net:8084/facts/O%2B_S%2B%2B_I_C_E-___!PS)
-
 The missing layer between [Tup](https://gittup.org/tup) and your C/C++ compiler binaries, providing opinionated flags for typical debug/release mode settings.
 My fourth attempt at writing such a layer, and finally almost not janky.
 Provides first-class support for [C++23 Standard Library Modules (P2465R3)](https://wg21.link/P2465R3).
