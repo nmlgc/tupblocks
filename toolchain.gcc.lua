@@ -6,8 +6,8 @@ tup.import("CXX_STDLIB=libstdc++")
 tup.import("CXX=g++")
 
 CONFIG = CONFIG:branch({
-	-- cflags = { release = { "-flto" } },
-	-- lflags = { release = { "-flto" } },
+	cflags = { release = { "-flto=auto" } },
+	lflags = { release = { "-flto=auto" } },
 })
 
 ---@param module_fn {} | string
