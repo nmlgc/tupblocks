@@ -158,21 +158,30 @@ project_obj = (
 project_cfg:exe((project_obj + the_lib_dll), "project")
 ```
 
-### Interacting with pkg-config
+### Customizing flags from outside the script
+
+The `CONFIG.cflags` and `CONFIG.lflags` tables start out with the contents of the `CFLAGS` and `LFLAGS` environment variables, respectively.
+
+### The `tupblocks.sh` helper script
+
+Since Lua scripts for Tup can merely procedurally generate rules that will later be executed in parallel, these scripts can't generate rules based on the output of a rule.
+Any system-specific configuration must therefore be run directly inside the shell surrounding the Tupfile, and passed to Tup via environment variables.
+`tupblocks.sh` offers a set of utility functions that implement common configuration tasks:
+
+#### Interacting with pkg-config
 
 Tup supports command substitution in rules, but this is a bad fit for pkg-config for two reasons:
 
 1. pkg-config would run once per rule
-2. Since the Lua script runs before any rule is executed, Tupfiles can't make decisions based on command output. But doing so would be required to e.g. fall back from system libraries to vendored ones.
+2. Fallbacks from system libraries to vendored ones require querying the system, which can't be done as part of rules, as stated above.
 
-Therefore, it makes more sense to run pkg-config in a shell script surrounding the Tupfile.
-The `pkg_config_env.sh` helper script provides a function that redirects the pkg-config output into environment variables that can later be used with the `EnvConfig()` Lua function:
+The `pkg_config_env_optional` and `pkg_config_env_required` functions from `tupblocks.sh` redirect the pkg-config output into environment variables that can later be used with the `EnvConfig()` Lua function:
 
 `build.sh`:
 
 ```sh
 #!/bin/sh
-. ./vendor/tupblocks/pkg_config_env.sh
+. ./vendor/tupblocks/tupblocks.sh
 pkg_config_env_optional zlib
 pkg_config_env_required sdl2
 tup
@@ -200,10 +209,6 @@ local ZLIB_LINK = (EnvConfig("zlib") or BuildZLib(CONFIG))
 -- SDL 2 must be installed via pkg-config.
 local SDL2_LINK = EnvConfig("sdl2")
 ```
-
-### Customizing flags from outside the script
-
-The `CONFIG.cflags` and `CONFIG.lflags` tables start out with the contents of the `CFLAGS` and `LFLAGS` environment variables, respectively.
 
 ## `compile_commands.json` generation (experimental)
 
