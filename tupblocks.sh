@@ -1,5 +1,38 @@
 #!/bin/sh
 
+# Detects the toolchain by querying the tool from the environment variable
+# `$1`, falling back on `$2` if it's not set. Returns with the environment
+# variable `TOOLCHAIN` set to the tupblocks toolchain identifier, and exits on
+# failure.
+toolchain_detect() {
+	eval "TOOL=\"\${$1:-$2}\""
+	read -r version_line <<EOF
+	$($TOOL --version)
+EOF
+	case "$version_line" in
+		*GCC*)
+			TOOLCHAIN_NEW=gcc;;
+		*clang*)
+			TOOLCHAIN_NEW=clang;;
+		*)
+			>&2 printf "\033[0;31m❌ Unable to detect toolchain from '%s' \033[0m\n" "$TOOL"
+			exit 1;
+	esac
+	[ -n "$TOOLCHAIN" ] &&
+		[ "$TOOLCHAIN" != "$TOOLCHAIN_NEW" ] &&
+		>&2 printf "\033[0;31m❌ Toolchain mismatch: '%s' vs. '%s'\033[0m\n" "$TOOLCHAIN" "$TOOLCHAIN_NEW" &&
+		exit 1
+	export TOOLCHAIN="$TOOLCHAIN_NEW"
+}
+
+toolchain_detect_via_cc() {
+	toolchain_detect "CC" "cc"
+}
+
+toolchain_detect_via_cxx() {
+	toolchain_detect "CXX" "c++"
+}
+
 # Redirects pkg-config output into environment variables for use with the
 # tupblocks EnvConfig() function.
 pkg_config_env() {

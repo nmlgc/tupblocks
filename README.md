@@ -168,6 +168,29 @@ Since Lua scripts for Tup can merely procedurally generate rules that will later
 Any system-specific configuration must therefore be run directly inside the shell surrounding the Tupfile, and passed to Tup via environment variables.
 `tupblocks.sh` offers a set of utility functions that implement common configuration tasks:
 
+#### Toolchain auto-detection
+
+On *nix systems, the system-wide default C and C++ compiler is typically accessed through the `cc` and `c++` symlinks, which are typically overridden with the `CC` and `CXX` environment variables.
+Both of these can point to either GCC or Clang, which require different compilation options.
+If your program can build with both compilers, it makes sense to auto-detect a system's default compiler in order to use the correct toolchain.
+
+`build.sh`:
+
+```sh
+#!/bin/sh
+. ./vendor/tupblocks/tupblocks.sh
+toolchain_detect_via_cc  # if `CC`  is more likely to be non-standard
+toolchain_detect_via_cxx # if `CXX` is more likely to be non-standard
+tup
+```
+
+`Tupfile.lua`:
+
+```lua
+tup.import("TOOLCHAIN=gcc") -- Defaulting to GCC just in case…
+tup.include("vendor/tupblocks/toolchain." .. TOOLCHAIN .. ".lua")
+```
+
 #### Interacting with pkg-config
 
 Tup supports command substitution in rules, but this is a bad fit for pkg-config for two reasons:
