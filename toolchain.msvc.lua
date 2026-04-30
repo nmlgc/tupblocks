@@ -7,9 +7,9 @@ CONFIG = CONFIG:branch({
 	},
 	lflags = {
 		"/MANIFEST:EMBED",
-		release = { "/OPT:REF", "/OPT:ICF", "/LTCG" },
+		"/OPT:REF",
+		release = { "/OPT:ICF", "/LTCG" },
 	},
-	loutputs = { debug = { extra_outputs = { "%O.ilk" } } },
 })
 
 function CONFIG:cxx(inputs)
