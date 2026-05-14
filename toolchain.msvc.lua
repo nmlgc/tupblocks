@@ -36,16 +36,18 @@ CONFIG.cc = CONFIG.cxx
 
 ---Compiles the given C++ module and returns a shape for using it.
 ---@param module_fn string
+---@param extra_link ConfigShape? Extra linking and compilation flags
 ---@return ConfigShape
-function CONFIG:cxxm(module_fn)
+function CONFIG:cxxm(module_fn, extra_link)
 	local module = tup.base(module_fn)
-	local module_cflags = { "/EHsc", "/std:c++latest" }
+	local module_cflags = { "/std:c++latest" }
 
 	---@type ConfigShape
 	local module_compile = {
 		cflags = { '/ifcOutput "%O.ifc"' },
 		coutputs = {},
 	}
+	TableExtend(module_compile, extra_link)
 	module_compile.cflags += module_cflags
 
 	-- Transparent support for /analyze…
@@ -70,6 +72,7 @@ function CONFIG:cxxm(module_fn)
 		cinputs = {},
 		linputs = self:branch(module_compile):cxx(module_fn),
 	}
+	TableExtend(ret, extra_link)
 	for buildtype, objs in pairs(ret.linputs) do
 		local obj = objs[1]
 		local ifc = obj:gsub(".obj$", ".ifc")
@@ -89,10 +92,13 @@ end
 function CONFIG:cxx_std_modules()
 	tup.import("VCToolsInstallDir")
 
+	---@type ConfigShape
+	local std_link = { cflags = "/EHsc" }
+
 	-- tup turns `VCToolsInstallDir` into a table if it contains a space, but
 	-- concatenating a string turns it back into a string?!
 	local dir = (VCToolsInstallDir .. "\\modules"):gsub("\\", "/")
-	local std = self:cxxm(dir .. "/std.ixx")
+	local std = self:cxxm(dir .. "/std.ixx", std_link)
 	local compat = self:branch(std):cxxm(dir .. "/std.compat.ixx")
 	return TableExtend(std, compat)
 end
