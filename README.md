@@ -85,14 +85,15 @@ THE_LIB_COMPILE = {
 		-- makes sense to use it for cross-platform settings.
 		debug = { "-DDEBUG", "-DDEBUG_VERBOSE" },
 
-		-- The base CONFIG table uses the /GL flag for Visual Studio release
-		-- builds by default, but this library doesn't like it. Merged settings
-		-- can also be functions that are applied to the current value, which
-		-- we can use to remove the flag using the flag_remove() helper.
+		-- The base CONFIG table for MSVC uses the /GL flag for release builds
+		-- by default, but this library doesn't like it. Merged settings can
+		-- also be functions that are applied to the concatenated final value
+		-- up to the current point in the flag tree, which allows us to remove
+		-- the flag using the `FlagRemove()` helper.
 		-- Based on a true story:
 		--
 		-- https://github.com/libsdl-org/SDL/commit/ae7446a9591299eef719f82403c
-		release = { cflags = flag_remove("/GL") }
+		release = { FlagRemove("/GL") }
 	},
 	objdir = "the_lib/", -- creates a new namespace for object files
 }
