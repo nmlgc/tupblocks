@@ -1,6 +1,6 @@
 ---@generic T
----@alias ConfigVarFunction fun(prev: T): T
----@alias ConfigVar T | ConfigVarFunction<T>
+---@alias ConfigVarFunction fun(s: string): string
+---@alias ConfigVar T | ConfigVarFunction
 ---@alias ConfigVarBuildtyped { [integer]: ConfigVar, [string]: ConfigVar[] }
 
 ---@class ConfigShape
@@ -60,13 +60,13 @@ function ForEach(func, ...)
 end
 
 ---@generic T
----@param func fun(value: T): boolean
+---@param func fun(value: string): boolean
 ---@param ... T[]
 function First(func, ...)
 	local args = { ... }
 	for _, arg in ipairs(args) do
 		for _, value in ipairs(arg) do
-			if func(value) then
+			if ((type(value) == "string") and func(value)) then
 				return value
 			end
 		end
@@ -75,22 +75,21 @@ function First(func, ...)
 end
 
 ---@generic T
----@param func fun(value: T): boolean
+---@param func fun(value: string): boolean
 ---@param ... T[]
 function MatchesAny(func, ...)
 	return (First(func, ...) ~= nil)
 end
 
 ---@param flag string
----@return ConfigVarFunction<string[]>
-function flag_remove(flag)
-	return function(prev)
-		for i, prev_flag in ipairs(prev) do
-			if string.match(prev_flag, flag) then
-				table.remove(prev, i)
-			end
-		end
-		return prev
+---@return ConfigVarFunction
+function FlagRemove(flag)
+	return function(s)
+		s = s:gsub((" " .. flag .. " "), " ")
+		s = s:gsub(("^" .. flag .. " "), " ")
+		s = s:gsub((" " .. flag .. "$"), " ")
+		s = s:gsub(("^" .. flag .. "$"), "")
+		return s
 	end
 end
 
@@ -142,10 +141,8 @@ function TableExtend(t, other)
 				end
 			end
 		end
-	elseif (other_type == "string") then
+	else
 		table.insert(t, other)
-	elseif (other_type == "function") then
-		return other(t)
 	end
 	return t
 end
@@ -375,9 +372,13 @@ function ConcatFlags(...)
 	local seen = {}
 	local ret = ""
 	ForEach(function (flag)
-		if not seen[flag] then
-			seen[flag] = true
-			ret = (ret .. " " .. flag)
+		if (type(flag) == "function") then
+			ret = flag(ret)
+		else
+			if not seen[flag] then
+				seen[flag] = true
+				ret = (ret .. " " .. flag)
+			end
 		end
 	end, ...)
 	return ret
