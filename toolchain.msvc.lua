@@ -88,12 +88,13 @@ function CONFIG:cxxm(module_fn, extra_link)
 end
 
 -- Compiles the C++ standard library modules and returns a shape for using them.
+---@param extra_link ConfigShape? Extra linking and compilation flags
 ---@return ConfigShape
-function CONFIG:cxx_std_modules()
+function CONFIG:cxx_std_modules(extra_link)
 	tup.import("VCToolsInstallDir")
 
 	---@type ConfigShape
-	local std_link = { cflags = "/EHsc" }
+	local std_link = TableExtend({ cflags = "/EHsc" }, extra_link)
 
 	-- tup turns `VCToolsInstallDir` into a table if it contains a space, but
 	-- concatenating a string turns it back into a string?!
