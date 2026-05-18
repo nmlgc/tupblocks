@@ -47,10 +47,14 @@ The `Tupfile.lua` for this example then would look something like this:
 -- into your build tree in another way.
 tup.include("vendor/tupblocks/Tuprules.lua")
 
+local win32 = (tup.getconfig("TUP_PLATFORM") == "win32")
+
 -- Include the rule functions for the desired build platform, together with
 -- default flags for debug and release builds.
-if tup.getconfig("TUP_PLATFORM") == "win32" then
+if win32 then
 	tup.include("vendor/tupblocks/toolchain.msvc.lua")
+else
+	tup.include("vendor/tupblocks/toolchain.gcc.lua")
 end
 
 -- Build the third-party library
@@ -75,28 +79,46 @@ THE_LIB = sourcepath("vendor/a_thirdparty_library/")
 THE_LIB_COMPILE = {
 	cflags = {
 		-- Required by the library for DLL builds. Used for every buildtype.
-		"/DDLL_EXPORT",
+		-- Since both MSVC and GCC-like compilers support the dash syntax, it
+		-- makes sense to use it for cross-platform settings.
+		"-DDLL_EXPORT",
 
 		-- Multiple flags should be passed as a table. Every logical flag
 		-- should be its own element, and can consist of multiple
 		-- space-separated words. This allows redundant flags to be
 		-- deduplicated when building the final command lines.
-		-- Since both MSVC and GCC-like compilers support the dash syntax, it
-		-- makes sense to use it for cross-platform settings.
 		debug = { "-DDEBUG", "-DDEBUG_VERBOSE" },
-
-		-- The base CONFIG table for MSVC uses the /GL flag for release builds
-		-- by default, but this library doesn't like it. Merged settings can
-		-- also be functions that are applied to the concatenated final value
-		-- up to the current point in the flag tree, which allows us to remove
-		-- the flag using the `FlagRemove()` helper.
-		-- Based on a true story:
-		--
-		-- https://github.com/libsdl-org/SDL/commit/ae7446a9591299eef719f82403c
-		release = { FlagRemove("/GL") }
 	},
 	objdir = "the_lib/", -- creates a new namespace for object files
 }
+
+if win32 then
+	-- The base `CONFIG` table for MSVC uses the `/GL` flag for release builds
+	-- by default, but this library doesn't like it. Merged settings can also
+	-- be functions that are applied to the concatenated final value up to the
+	-- current point in the flag tree, which allows us to remove the flag using
+	-- the `FlagRemove()` helper.
+	-- Based on a true story:
+	--
+	-- https://github.com/libsdl-org/SDL/commit/ae7446a9591299eef719f82403c568c
+	THE_LIB_COMPILE.cflags.release += { FlagRemove("/GL") }
+else
+	-- Shared Objects must be built with `-fPIC` on Linux. Since this is a
+	-- compile flag, this must be set manually, at least for now:
+	--
+	-- 1) The compile function (`:cxx()` or `:cc()`) can't know whether the
+	--    sources will end up in a Shared Object, a static library, or a
+	--    binary. In larger build scripts, these compile calls might be part of
+	--    a separate, reusable function that returns the generated objects,
+	--    letting the caller decide where they end up.
+	-- 2) PIC also has a performance cost, so we don't want to enable it by
+	--    default.
+	--
+	-- Also, we'd like to match the default Windows linking behavior and only
+	-- export what the code opted into, allowing the rest to be freely
+	-- optimized.
+	THE_LIB_COMPILE.cflags += {'-fPIC', '-fvisibility=hidden' }
+end
 
 -- Flags for linking to the library.
 THE_LIB_LINK = { cflags = ("-I" .. THE_LIB.join("include/")) }
@@ -112,9 +134,13 @@ the_lib_cfg = CONFIG:branch(THE_LIB_COMPILE, THE_LIB_LINK)
 -- operator for convenient table merging, even if the variable has not been
 -- declared yet.
 the_lib_src += (THE_LIB.glob("src/*.c") - { "linux_exclusive.c$" })
+if not win32 then
+	the_lib_src += THE_LIB.glob("src/linux_exclusive.c")
+end
 
--- Compile and link the library into a DLL. The rule functions return a table
--- that represents the outputs of this build step as inputs for further steps.
+-- Compile and link the library into a DLL on Windows or a `.so` on Linux. The
+-- rule functions return a table that represents the outputs of this build step
+-- as inputs for further steps.
 the_lib_obj = the_lib_cfg:cxx(the_lib_src)
 the_lib_dll = the_lib_cfg:dll(the_lib_obj, "the_lib")
 -- -----------------------------
@@ -130,13 +156,16 @@ local modules_cfg = CONFIG:cxx_std_modules()
 
 -- Since we don't need our flags anywhere else, we just inline the table.
 project_cfg = CONFIG:branch(modules_cfg, config_h, THE_LIB_LINK, the_lib_dll, {
-	cflags = {
-		("-I" .. PROJECT.root),
-		"/source-charset:utf-8",
-		"/execution-charset:utf-8",
-	},
+	cflags = { ("-I" .. PROJECT.root) },
 	objdir = "project/",
 })
+
+if win32 then
+	project_cfg = CONFIG:branch({ cflags = {
+		"/source-charset:utf-8",
+		"/execution-charset:utf-8",
+	} })
+end
 
 project_src += PROJECT.glob("*.cpp")
 
@@ -150,11 +179,14 @@ project_src.extra_inputs += Header("obj/config.h", {
 })
 -- project_src.extra_inputs += EnvHeader("obj/config.h", { BUILDER })
 
+local project_obj = project_cfg:cxx(project_src)
+
 -- Right now, rule function outputs must be merged using `+`, not `+=`.
-project_obj = (
-	project_cfg:cxx(project_src) +
-	project_cfg:rc(PROJECT.join("windows_resource.rc"))
-)
+if win32 then
+	project_obj = (
+		project_obj + project_cfg:rc(PROJECT.join("windows_resource.rc"))
+	)
+end
 
 project_cfg:exe(project_obj, "project")
 ```
