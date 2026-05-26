@@ -124,7 +124,7 @@ function CONFIG:dll(inputs, name)
 			ConcatFlags(vars.lflags) .. " " ..
 			'/PDBALTPATH:"' .. basename .. '".pdb /out:"%o"' .. inps
 		)
-		tup.rule(vars.linputs, cmd, vars.loutputs)
+		tup.rule(vars.linputs, ("^o^ " .. cmd), vars.loutputs)
 		return { linputs = lib }
 	end)
 end
