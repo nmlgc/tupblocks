@@ -73,7 +73,7 @@ function CONFIG:exe(inputs, name)
 	return self:CommonL(inputs, name, "", function(vars, _, inps)
 		-- Inputs must come first to work properly with `-Wl,--as-needed`.
 		local cmd = (CXX .. inps .. ' -o "%o"' .. ConcatFlags(vars.lflags))
-		return tup.rule(vars.linputs, cmd, vars.loutputs)
+		return { linputs = tup.rule(vars.linputs, cmd, vars.loutputs) }
 	end)
 end
 

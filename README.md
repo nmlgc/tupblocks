@@ -129,7 +129,7 @@ PROJECT = sourcepath("src_of_project/")
 local modules_cfg = CONFIG:cxx_std_modules()
 
 -- Since we don't need our flags anywhere else, we just inline the table.
-project_cfg = CONFIG:branch(modules_cfg, config_h, THE_LIB_LINK, {
+project_cfg = CONFIG:branch(modules_cfg, config_h, THE_LIB_LINK, the_lib_dll, {
 	cflags = {
 		("-I" .. PROJECT.root),
 		"/source-charset:utf-8",
@@ -156,7 +156,7 @@ project_obj = (
 	project_cfg:rc(PROJECT.join("windows_resource.rc"))
 )
 
-project_cfg:exe((project_obj + the_lib_dll), "project")
+project_cfg:exe(project_obj, "project")
 ```
 
 ### Customizing flags from outside the script

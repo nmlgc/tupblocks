@@ -3,7 +3,11 @@
 ---@alias ConfigVar T | ConfigVarFunction
 ---@alias ConfigVarBuildtyped { [integer]: ConfigVar, [string]: ConfigVar[] }
 
----@class ConfigShape
+---@class LinkShape
+---@field lflags? string | { [integer]: ConfigVar }
+---@field linputs? string | { [integer]: ConfigVar }
+
+---@class ConfigShape: LinkShape
 ---@field objdir? ConfigVar<string>
 ---@field bindir? ConfigVar<string>
 ---@field suffix? ConfigVarBuildtyped<string>
@@ -217,9 +221,11 @@ end
 
 ---@param name string
 ---@param ext string
----@param rule fun(vars: table, basename: string, inps: string): table Runs the build rule and returns inputs for further rules.
+---@param rule fun(vars: table, basename: string, inps: string): LinkShape Runs the build rule and returns inputs and flags for further rules.
 function CONFIG:CommonL(inputs, name, ext, rule)
-	local ret = {}
+	---@type ConfigShape
+	local ret = { lflags = {}, linputs = {} }
+
 	local buildtypes = self:render_for_buildtypes(
 		"lflags", "linputs", "loutputs", "suffix"
 	)
@@ -231,9 +237,10 @@ function CONFIG:CommonL(inputs, name, ext, rule)
 		for _, input in ipairs(vars.linputs) do
 			inps = string.format('%s "%s"', inps, input)
 		end
-		ret[buildtype] = rule(vars, basename, inps)
+		local link = rule(vars, basename, inps)
+		ret.lflags[buildtype] = link.lflags
+		ret.linputs[buildtype] = link.linputs
 	end
-	setmetatable(ret, functional_metatable)
 	return ret
 end
 
