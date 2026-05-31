@@ -85,16 +85,61 @@ function CONFIG:dll(inputs, name, version_major, version_minor)
 		})
 		local cmd = (CXX .. inps .. so_flags .. ' ' .. ConcatFlags(vars.lflags))
 
-		local LN_CMD = '^o^ ln -s "%s" "%%o"'
+		-- We'd like to have something like COFF .lib files to avoid needless
+		-- relinking of dependent binaries via Tup's ^o^ flag, just as we do in
+		-- the MSVC toolchain. However, Unix linkers typically take the list of
+		-- dynamic symbols from the proper .so file, so there's no direct
+		-- equivalent that we can simply produce during linking.
+		-- Hence, we have to fiddle a bit: Since the link invocation for those
+		-- binaries must never see the real `.so` file (because Tup would then
+		-- register it as a regular dependency and then still relink on every
+		-- code change), we need to replace that `.so` with some kind of dummy.
+		-- That file must somehow contain all exported symbols, but *mustn't*
+		-- contain any actual code to remain unchanged as long as the set of
+		-- exported functions doesn't change.
+		--
+		-- And as it turns out, there are indeed several ways to create such a
+		-- dummy `.so` after the fact. The seemingly most robust and portable
+		-- option involves parsing the list of symbols into an ASM file:
+		--
+		-- 1) Read out the dynamic symbols using `nm`
+		-- 2) Transform this list of symbols into an assembly file that defines
+		--    each symbol as a function with an explicit 1-byte size, but
+		--    without emitting any code
+		-- 3) Generate a `.so` from just this assembly file
+		--
+		-- (Linker scripts with `= 0;` symbol assignments seem to work at
+		-- first, but break when compiling with `-fno-plt`, which is part of
+		-- the default `CFLAGS` set by Arch Linux's `makepkg`. Also, they
+		-- require a slightly ugly empty source file, because the linker
+		-- insists on seeing at least one source file.)
+		--
+		-- `nm` is an integral part of the binutils required for every Unix
+		-- compiler toolchain, and `sed` is one of the most widespread tools
+		-- ever, so this should work nicely even in minimal MinGW setups.
+		-- By adding `^o^` to step 3) *and* 2), we can even skip the additional
+		-- link command as long as the interface doesn't change.
+		-- As a nice side effect, this dummy file also replaces the typical
+		-- suffix-less .so symlink that would typically get passed to the
+		-- linker.
+
 		local real_fn = tup.rule(vars.linputs, cmd, vars.loutputs)[1]
 		local major_fn = (self.vars.bindir .. soname)
+		local dummy_s_fn = (self.vars.objdir .. basename .. ".S")
 		local link_fn = (self.vars.bindir .. basename .. ".so")
-		local extra_inputs = real_fn
-		extra_inputs += tup.rule(
-			{}, string.format(LN_CMD, tup.file(real_fn)), major_fn
+
+		local dummy_gen_cmd = (
+			'^o^ nm -DUWj "%f" | ' ..
+			'sed "s/.*/.global &\\n.type &, @function\\n&:\\n.size &, 1/" >"%o"'
 		)
+		local dummy_link_cmd = string.format(
+			'^o^ %s "%%f" -nostdlib %s', CC, so_flags
+		)
+
+		tup.rule(real_fn, dummy_gen_cmd, dummy_s_fn)
+		local extra_inputs = tup.rule(dummy_s_fn, dummy_link_cmd, link_fn)[1]
 		extra_inputs += tup.rule(
-			{}, string.format(LN_CMD, tup.file(major_fn)), link_fn
+			{}, ('^o^ ln -s "' .. tup.file(real_fn) .. '" "%o"'), major_fn
 		)
 		return {
 			lflags = {
