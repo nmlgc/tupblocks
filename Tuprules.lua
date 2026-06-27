@@ -37,8 +37,8 @@ CONFIG = {
 		objdir = "obj/",
 		bindir = "bin/",
 		suffix = { debug = "d" },
-		cflags = CFLAGS,
-		lflags = LFLAGS,
+		cflags = {},
+		lflags = {},
 		cinputs = {},
 		linputs = {},
 		coutputs = {},
@@ -46,6 +46,9 @@ CONFIG = {
 	},
 }
 CONFIG.__index = CONFIG
+
+---@type ConfigShape
+CMDLINE = { cflags = CFLAGS, lflags = LFLAGS }
 
 ---@generic T
 ---@param func fun(value: T)
@@ -186,6 +189,7 @@ function CONFIG:render_for_buildtypes(...)
 			rendered[field] = (rendered[field] or {})
 			TableExtend(rendered[field], self.vars[field])
 			TableExtend(rendered[field], (self.vars[field][buildtype] or {}))
+			TableExtend(rendered[field], (CMDLINE[field] or {}))
 			for buildtype_inner, _ in pairs(ret) do
 				rendered[field][buildtype_inner] = nil
 			end
