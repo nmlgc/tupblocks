@@ -22,12 +22,12 @@ local function info(str)
 end
 
 tup.import("CFLAGS")
-tup.import("LFLAGS")
+tup.import("LDFLAGS")
 if (CFLAGS ~= nil) then
 	info("ℹ️ Using initial CFLAGS from environment: `" .. CFLAGS .. "`")
 end
-if (LFLAGS ~= nil) then
-	info("ℹ️ Using initial LFLAGS from environment: `" .. LFLAGS .. "`")
+if (LDFLAGS ~= nil) then
+	info("ℹ️ Using initial LDFLAGS from environment: `" .. LDFLAGS .. "`")
 end
 
 ---@class Config
@@ -48,7 +48,7 @@ CONFIG = {
 CONFIG.__index = CONFIG
 
 ---@type ConfigShape
-CMDLINE = { cflags = CFLAGS, lflags = LFLAGS }
+CMDLINE = { cflags = CFLAGS, lflags = LDFLAGS }
 
 ---@generic T
 ---@param func fun(value: T)
