@@ -161,7 +161,7 @@ project_cfg:exe((project_obj + the_lib_dll), "project")
 
 ### Customizing flags from outside the script
 
-The `CONFIG.cflags` and `CONFIG.lflags` tables start out with the contents of the `CFLAGS` and `LFLAGS` environment variables, respectively.
+The `CONFIG.cflags` and `CONFIG.lflags` tables start out with the contents of the `CFLAGS` and `LDFLAGS` environment variables, respectively.
 
 ### The `tupblocks.sh` helper script
 
