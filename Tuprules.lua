@@ -268,16 +268,31 @@ function EnvConfig(...)
 	return ret
 end
 
----Creates a C header file with macros `#define`d according to the given table.
----`false` values are turned into `#undef`. Returns `fn`.
+---Creates a file out of the given lines. Returns `fn`.
 ---@param fn string Output file name
----@param tbl { [string]: string | false } Macros and their values
-function Header(fn, tbl)
+---@param lines string[] Contents
+function File(fn, lines)
 	local quote = ""
 	if (tup.getconfig("TUP_PLATFORM") ~= "win32") then
 		quote = "'"
 	end
 
+	local cmd = "(echo "
+	for i, line in pairs(lines) do
+		if (i >= 2) then
+			cmd = (cmd .. "&& echo ")
+		end
+		cmd = (cmd .. quote .. line:gsub("\\", "\\\\") .. quote)
+	end
+	tup.rule({}, (cmd .. ')>"%o"'), fn)
+	return fn
+end
+
+---Creates a C header file with macros `#define`d according to the given table.
+---`false` values are turned into `#undef`. Returns `fn`.
+---@param fn string Output file name
+---@param tbl { [string]: string | false } Macros and their values
+function Header(fn, tbl)
 	-- Sort the incoming keys, so that we output them in a deterministic order
 	---@type string[]
 	local macros = {}
@@ -286,25 +301,16 @@ function Header(fn, tbl)
 	end
 	table.sort(macros)
 
-	local cmd = ""
+	local lines = {}
 	for _, macro in pairs(macros) do
-		if (#cmd == 0) then
-			cmd = ("(echo " .. quote)
-		else
-			cmd = (cmd .. quote .. "&& echo " .. quote)
-		end
-
 		local val = tbl[macro]
 		if (val == false) then
-			cmd = string.format('%s#undef %s', cmd, macro)
+			table.insert(lines, string.format('#undef %s', macro))
 		else
-			val = val:gsub("\\", "\\\\")
-			cmd = string.format('%s#define %s "%s"', cmd, macro, val)
+			table.insert(lines, string.format('#define %s "%s"', macro, val))
 		end
 	end
-	cmd = (cmd .. quote .. ")")
-	tup.rule({}, (cmd .. '>"%o"'), fn)
-	return fn
+	return File(fn, lines)
 end
 
 ---Creates a C header file with macros `#define`d according to the given
