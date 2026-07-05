@@ -139,9 +139,15 @@ function CONFIG:lib(inputs, name)
 	local ret = {}
 	local buildtypes = self:render_for_buildtypes("suffix")
 	for buildtype, vars in pairs(buildtypes) do
+		-- Static libraries don't care about the order of their objects, so
+		-- let's eliminate that potential source of non-determinism altogether.
+		local inputs_sorted = {}
+		inputs_sorted += inputs[buildtype]
+		table.sort(inputs_sorted)
+
 		local lib_fn = (self.vars.objdir .. name .. vars.suffix .. ".lib")
 		local cmd = 'lib /nologo /out:"%o"'
-		for _, input in ipairs(inputs[buildtype]) do
+		for _, input in ipairs(inputs_sorted) do
 			cmd = string.format('%s "%s"', cmd, input)
 		end
 
